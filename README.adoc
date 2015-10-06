@@ -1,0 +1,27 @@
+= fsb2
+:author: Marcos Cruz (programandala.net)
+
+// This file is part of fsb2
+// http://programandala.net/en.program.fsb2.html
+
+// This file is written in AsciiDoc/Asciidoctor format.
+// See <http://asciidoctor.org>.
+
+== Description
+
+fsb2 is a preprocessor and converter of Forth source files,
+under development.
+
+Its goal is to make it easy to edit and maintain Forth source
+files, in ordinary text format, for Forth systems that use
+blocks.
+
+Following some simple layout conventions, the source file can be
+edited without the lack of space imposed by blocks, thus making
+it possible to include detailed comments and arrange a clear
+layout.
+
+fsb2's web page:
+http://programandala.net/en.program.fsb2.html.
+
+// vim: tw=64:ts=2:sts=2:sw=2:et
