@@ -8,7 +8,7 @@
 \ retain the copyright notice(s) and this license in all
 \ redistributed copies and derived works. There is no warranty.
 
-s" A-00-201510101503" 2constant version
+s" A-00-201510101521" 2constant version
 
 \ --------------------------------------------------------------
 \ Requirements
@@ -73,7 +73,7 @@ variable output-fid
 
 : indented?  ( ca len -- f )
   \ Is the given code line indented?
-  0= if  drop false exit  then  c@ bl =  ;
+  if  c@ bl =  else  drop false  then  ;
 
 : metacomment?  ( ca len -- f )
   \ Is the given code line a metacomment?
@@ -86,18 +86,27 @@ variable screen  \ current screen of the input file
 : valid-line?  ( ca len -- f )
   \ Is the given code line a valid line?
   \ A valid line is a non-empty line that is not a metacomment.
-  dup 0= if  2drop false exit  then
-  metacomment? 0=  ;
+  dup if    metacomment? 0=
+      else  2drop false  then  ;
 
+2variable possible-block-marker
+
+: paren-marker?  ( -- f )
+  possible-block-marker 2@ s" (" str=
+  ;
+: dot-paren-marker?  ( -- f )
+  possible-block-marker 2@ s" .(" str=
+  ;
 : block-marker?  ( ca len -- f )
-  \ Is the given string the a word used as block marker?
-  2dup s" ("  str= if  2drop true exit  then
-       s" .(" str= if  true exit  then
+  \ Is the given string the word used as block marker?
+  possible-block-marker 2!
+  paren-marker? ?dup ?exit
+  dot-paren-marker? ?dup ?exit
   false  ;
 
 : block-header?  ( ca len -- f )
   \ Is the given code line a block header?
-  2dup indented?  if    false exit
+  2dup indented?  if    2drop false exit
                   else  first-name block-marker?  then
   ;
 
@@ -180,7 +189,7 @@ variable helped  helped off  \ flag: has the help been shown?
   ;
 : aid  ( -- )
   \ Show the help if necessary; executed before quitting the program
-  input-files @ helped @ or ?exit help
+  input-files @ helped @ or 0= if  help  then  ;
   ;
 : verbose-option  ( -- )
   verbose on s" Verbose mode is on" echo
@@ -223,3 +232,4 @@ run
 \ History
 
 \ 2015-10-07: Start.
+\ 2015-10-10: Completed the skeleton.
