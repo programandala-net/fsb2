@@ -8,7 +8,7 @@
 \ retain the copyright notice(s) and this license in all
 \ redistributed copies and derived works. There is no warranty.
 
-s" A-00-20151007" 2constant version
+s" A-00-201510101503" 2constant version
 
 \ --------------------------------------------------------------
 \ Requirements
@@ -16,12 +16,59 @@ s" A-00-20151007" 2constant version
 \ From Forth Foundation library
 include ffl/arg.fs  \ argument parser
 
+\ From Galope
+
+s" /COUNTED-STRING" environment? 0= [if]  255  [then]
+constant /counted-string
+
+\ --------------------------------------------------------------
+\ Variables
+
+variable verbose        \ flag: verbose mode?
+variable input-files    \ counter
+variable fbs-format     \ flag: FBS format output instead of FB?
+
+\ --------------------------------------------------------------
+\ Files
+
+variable input-fid
+variable output-fid
+
+: +input ( ca len -- )
+  \ Open the input file.
+  \ ca len = filename
+  r/o open-file abort" Error while opening the input file."
+  input-fid !
+  ;
+: +output  ( ca len -- )
+  \ Set the given filename as the output file for the printing words.
+  w/o create-file abort" Error while opening the output file."
+  dup output-fid ! to outfile-id  \ Redirect the printing words to the file
+  ;
+
+: -input  ( -- )
+  \ Close the input file.
+  input-fid @ close-file abort" Error while closing the input file."
+  ;
+: -output  ( -- )
+  \ Close the output file.
+  stdout to outfile-id  \ Restore stdout for the printing words
+  output-fid @ close-file abort" Error while closing the output file."
+  ;
+
+: output-suffix  ( -- ca len )
+  fbs-format @ if  s" .fbs"  else  s" .fb"  then
+  ;
+: >output-filename  ( ca1 len1 -- ca2 len2 )
+  output-suffix s+
+  ;
+
 \ --------------------------------------------------------------
 \ Converter
 
 : first-name  ( ca1 len1 -- ca2 len2 )
   \ Return the first name _ca2 len2_ of the string _ca1 len1_.
-  \ XXX TODO
+  bl skip 2dup bl scan nip -
   ;
 
 : indented?  ( ca len -- f )
@@ -52,18 +99,23 @@ variable screen  \ current screen of the input file
   \ Is the given code line a block header?
   2dup indented?  if    false exit
                   else  first-name block-marker?  then
-  else
-  false  ;
+  ;
+
+create empty-line c/l chars allot
+empty-line c/l blank
 
 : code-line  ( ca len -- )
   \ Process a valid line.
+  type key drop
   ;
+
+create line-buffer /counted-string chars allot
 
 : (fsb2)  ( -- )
   line off  screen off
   0.
   begin
-    2drop line-buffer over swap file read-line throw
+    2drop line-buffer dup c/l input-fid @ read-line throw
   while
     2dup valid-line? 0=
   while  ( ca len )
@@ -72,8 +124,10 @@ variable screen  \ current screen of the input file
 
 : fsb2  ( ca len -- )
   \ ca len = input file
-  verbose @ if  cr 2dup type  then  (fs2zx)
-  verbose @ if  cr  then  ;
+  \ verbose @ if  cr 2dup type  then \ XXX TODO
+  (fsb2)
+  \ verbose @ if  cr  then \ XXX TODO
+  ;
 
 \ --------------------------------------------------------------
 \ Misc
@@ -86,7 +140,7 @@ variable screen  \ current screen of the input file
 
 \ Create a new argument parser
 s" fsb2.fs"  \ name
-s" [OPTION | FILE] ... [OPTION | FILE]"  \ usage
+s" [OPTION...] FILE]"  \ usage
 version
 s" Written in Forth with Gforth by Marcos Cruz (programandala.net)" \ extra
 arg-new constant arguments
@@ -104,12 +158,12 @@ true  \ switch type
 arg.verbose-option arguments arg-add-option
 
 \ Add the FB option (default)
-5 constant arg.fsb-option
+5 constant arg.fb-option
 char b  \ short option
 s" fb"  \ long option
 s" convert to FB format"  \ description
 true  \ switch type
-arg.command-option arguments arg-add-option
+arg.fb-option arguments arg-add-option
 
 \ Add the FBS option
 6 constant arg.fbs-option
@@ -117,43 +171,50 @@ char s  \ short option
 s" fbs"  \ long option
 s" convert to FBS format"  \ description
 true  \ switch type
-arg.command-option arguments arg-add-option
+arg.fbs-option arguments arg-add-option
 
 variable helped  helped off  \ flag: has the help been shown?
 : help  ( -- )
+  \ Show the help 
   arguments arg-print-help  helped on
   ;
 : aid  ( -- )
   \ Show the help if necessary; executed before quitting the program
-  files @ helped @ or 0= if  help  then
+  input-files @ helped @ or ?exit help
   ;
 : verbose-option  ( -- )
   verbose on s" Verbose mode is on" echo
   ;
+: ?input-files  ( -- )
+  input-files @ abort" Too many input files."
+  1 input-files +!
+  ;
 : input-file  ( ca len -- )
-  1 files +!  fs2zx  
+  2dup cr ." input-file = " type  \ XXX INFORMER
+  ?input-files
+  2dup >output-filename +output +input fsb2 -input -output 
   ;
 : version-option  ( -- )
   arguments arg-print-version
   ;
 : option  ( n -- )
+  dup cr ." option = " . \ XXX INFORMER
   case
-    arg.non-option        of  fsb2              endof
-    arg.verbose-option    of  verbose-option    endof
-    arg.command-option    of  command-option    endof
-    arg.version-option    of  version-option    endof
     arg.help-option       of  help              endof
+    arg.version-option    of  version-option    endof
+    arg.non-option        of  input-file        endof
+    arg.verbose-option    of  verbose-option    endof
+    arg.fb-option         of  fbs-format off    endof
+    arg.fbs-option        of  fbs-format on     endof
   endcase
   ;
 : option?  ( -- n flag )
   \ Parse the next option. Is it right?
   arguments arg-parse  dup arg.done <> over arg.error <> and
-  ;
-: (run)  ( -- )
-  begin  option?  while  option  repeat  drop
+  cr ." option? -- result " \ XXX INFORMER
   ;
 : run  ( -- )
-  (run) aid finish
+  begin  option?  while  option  repeat  drop  aid
   ;
 
 run
