@@ -2,16 +2,30 @@
 
 \ fsb2
 
+\ http://programandala.net/en.program.fsb2.html
+
+s" A-00-201510102124" 2constant version
+
+\ --------------------------------------------------------------
+\ Author and license
+
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
-\ You may do whatever you want with this work, so long as you
-\ retain the copyright notice(s) and this license in all
-\ redistributed copies and derived works. There is no warranty.
+\ You may do whatever you want with this work, so long as you retain
+\ the copyright notice(s) and this license in all redistributed copies
+\ and derived works. There is no warranty.
 
-s" A-00-201510102014" 2constant version
+\ --------------------------------------------------------------
+\ History
+
+\ 2015-10-07: Start.
+\ 2015-10-10: First working version.
 
 \ --------------------------------------------------------------
 \ Requirements
+
+only forth definitions  decimal
+warnings off
 
 \ From Forth Foundation Library
 
@@ -22,23 +36,27 @@ include ffl/arg.fs  \ argument parser
 s" /COUNTED-STRING" environment? 0= [if]  255  [then]
 constant /counted-string
 
-: -leading  ( ca len -- ca' len' )  bl skip  ;
+: -leading  ( ca len -- ca' len' )
+  bl skip  ;
 
-: trim  ( ca len -- ca' len' )  -leading -trailing  ;
+: trim  ( ca len -- ca' len' )
+  -leading -trailing  ;
 
-: between  ( n n1 n2 -- f )  1+ within  ;
+: between  ( n n1 n2 -- f )
+  1+ within  ;
 
 \ --------------------------------------------------------------
 \ Variables and constants
 
-variable verbose      \ flag: verbose mode?
-variable input-files  \ counter  \ XXX OLD
+variable verbose      \ flag: verbose mode? \ XXX not used yet
 variable fbs-format   \ flag: FBS format output instead of FB?
 
-variable input-line   \ counter: current valid line of the input file
-variable output-line  \ counter: current valid line of the output file
-variable screen       \ counter: current screen
-variable screen-line  \ counter: current line (0..15) of the screen
+variable input-line#   \ counter: current line of the input file (1..x)
+variable output-line#  \ counter: current line of the output file (0..x)
+variable screen#       \ counter: current screen (0..x)
+variable screen-line#  \ counter: current screen line (0..15)
+
+variable options       \ counter: valid options
 
 16 constant lines/screen
 lines/screen 1- constant max-screen-line
@@ -49,9 +67,11 @@ lines/screen 1- constant max-screen-line
 variable input-fid
 variable output-fid
 
-: print>stdout  ( -- )  stdout to outfile-id  ;
+: print>stdout  ( -- )
+  stdout to outfile-id  ;
 
-: print>output  ( -- )  output-fid @ to outfile-id  ;
+: print>output  ( -- )
+  output-fid @ to outfile-id  ;
 
 : +input ( ca len -- )
   \ Open the input file.
@@ -64,7 +84,8 @@ variable output-fid
   w/o create-file abort" Error while opening the output file."
   output-fid !  ;
 
-: +files  ( -- )  +output +input  ;
+: +files  ( -- )
+  +output +input  ;
 
 : -input  ( -- )
   \ Close the input file.
@@ -75,7 +96,8 @@ variable output-fid
   print>stdout
   output-fid @ close-file abort" Error while closing the output file."  ;
 
-: -files  ( -- )  -input -output  ;
+: -files  ( -- )
+  -input -output  ;
 
 : output-suffix  ( -- ca len )
   fbs-format @ if  s" .fbs"  else  s" .fb"  then  ;
@@ -86,22 +108,33 @@ variable output-fid
 \ --------------------------------------------------------------
 \ Errors
 
-: .counter  ( a -- )  @ 4 .r cr  ;
+: .counter  ( a -- )
+  \ Print the contents of the given counter variable.
+  @ 4 .r cr  ;
 
 : report  ( -- )
-  ." Input line: " input-line   .counter
-  ." Output line:" output-line  .counter
-  ." Screen:     " screen       .counter
-  ." Screen line:" screen-line  .counter  ;
+  \ Print the counters.
+  ." Input line: " input-line#   .counter
+  ." Output line:" output-line#  .counter
+  ." Screen:     " screen#       .counter
+  ." Screen line:" screen-line#  .counter  ;
 
-: error  ( ca len -- )  -files cr ." ERROR: " type cr cr report abort  ;
+: error  ( ca len -- )
+  \ Abort with the given error message.
+  -files cr ." ERROR: " type cr cr report abort  ;
 
-: line-too-long.error  ( ca len -- )  s" Line too long: " 2swap s+ error  ;
+: line-too-long.error  ( ca len -- )
+  s" Line too long: " 2swap s+ error  ;
 
-: screen-too-long.error  ( -- )  s" Screen too long." error  ;
+: screen-too-long.error  ( -- )
+  s" Screen too long." error  ;
 
 \ --------------------------------------------------------------
 \ Converter
+
+: echo  ( ca len -- )
+  verbose @ if    print>stdout type cr  print>output
+            else  2drop  then  ;
 
 : first-name  ( ca1 len1 -- ca2 len2 )
   \ Return the first name _ca2 len2_ of the string _ca1 len1_.
@@ -142,18 +175,11 @@ variable output-fid
   dot-paren-marker? ?dup ?exit
   false  ;
 
-false [if]
+: starting-slash?  ( ca1 len1 -- f )
+  first-name s" \" str=  ;
 
-: screen-header?  ( ca len -- f )
-  \ Is the given input line a screen header?
-  2dup indented?  if    2drop false
-                  else  paren-screen-marker?  then  ;
-
-[else]
-
-: starting-slash?  ( ca1 len1 -- f )  first-name s" \" str=  ;
-
-: ending-slash?  ( ca1 len1 -- f )  last-name s" \" str=  ;
+: ending-slash?  ( ca1 len1 -- f )
+  last-name s" \" str=  ;
 
 : slash-screen-marker?  ( ca len -- f )
   \ Is the given input line a screen header with slash marker?
@@ -166,59 +192,65 @@ false [if]
   2dup slash-screen-marker?  if  2drop   true exit  then
        paren-screen-marker?  ;
 
-[then]
-
 create (empty-line) c/l chars allot
 
-: empty-line  ( ca len -- )  (empty-line) c/l  ;
+: empty-line  ( ca len -- )
+  (empty-line) c/l  ;
 
 empty-line blank
 
 : padded  ( ca1 len1 -- ca2 len2 )
-  \ Pad a line with spaces.
+  \ Pad the given input line with spaces.
   empty-line s+ drop c/l fbs-format @ +   ;
 
-: screen-too-long?  ( -- f )  screen-line @ max-screen-line >  ;
+: screen-too-long?  ( -- f )
+  \ Is the current screen too long?
+  screen-line# @ max-screen-line >  ;
 
 : next-screen-line  ( -- )
-  1 screen-line +!  screen-too-long? if  screen-line off  then  ;
+  \ Update the screen line counter.
+  1 screen-line# +!  screen-too-long? if  screen-line# off  then  ;
 
 : line>target  ( ca len -- )
-  screen-line @ 2 .r  \ XXX INFORMER
+  \ Print the given input line to the output file.
+  \ screen-line# @ 2 .r  \ XXX INFORMER
   padded type  fbs-format @ if  cr  then  next-screen-line  ;
 
-: complete-screen  ( -- )
-  \ Create empty lines to complete the current screen.
-  lines/screen screen-line @ - 0 ?do  empty-line line>target  loop
-  0 screen-line !  ;
-
 : missing-screen-lines?  ( -- f )
-  screen-line @ 1 max-screen-line between  ;
+  screen-line# @ 1 max-screen-line between  ;
 
-: screen-header  ( -- )
-  \ The current line is a screen header. Start a new screen.
-  screen-too-long? if  screen-too-long.error  then
-  missing-screen-lines? if  complete-screen  then  ;
+: (complete-screen)  ( -- )
+  \ Create empty lines to complete the current screen.
+  lines/screen screen-line# @ - 0 ?do  empty-line line>target  loop
+  0 screen-line# !  ;
 
-: ?length  ( ca len -- )
-  \ Abort if _len_ is too big.
+: complete-screen  ( -- )
+  \ Complete the current screen, if needed.
+  missing-screen-lines? if  (complete-screen)  then  ;
+
+: finish-screen  ( -- )
+  \ Check and complete the current screen.
+  screen-too-long? if  screen-too-long.error  then  complete-screen  ;
+
+: check-length  ( ca len -- )
+  \ Abort if the length of the given input line is too long.
   dup [ c/l 1- ] literal > if    line-too-long.error
                            else  2drop  then  ;
 
 : (process-line)  ( ca len -- )
-  \ Process a valid line of the input file.
-  2dup ?length
-  1 output-line +!
-  2dup screen-header? if    screen-header  then  line>target  ;
+  \ Process a valid input line.
+  2dup check-length
+  1 output-line# +!
+  2dup screen-header? if  finish-screen  then  line>target  ;
 
 : process-line  ( ca len -- )
-  1 input-line +!
+  1 input-line# +!
   2dup valid-line?  if  (process-line)  else  2drop  then  ;
 
 create line-buffer /counted-string chars allot
 
 : init-counters  ( -- )
-  input-line off  output-line off  screen off  screen-line off  ;
+  input-line# off  output-line# off  screen# off  screen-line# off  ;
 
 : get-line  ( -- ca len f )
   line-buffer dup /counted-string input-fid @ read-line throw  ;
@@ -227,20 +259,15 @@ create line-buffer /counted-string chars allot
   init-counters  print>output  ;
 
 : converter  ( -- )
-  init-converter  begin  get-line  while  process-line  repeat  ;
-
-\ --------------------------------------------------------------
-\ Misc
-
-: echo  ( ca len -- )
-  verbose @ if  type cr  else  2drop  then  ;
+  init-converter  begin  get-line  while  process-line  repeat
+  complete-screen  ;
 
 \ --------------------------------------------------------------
 \ Argument parser
 
 \ Create a new argument parser
 s" fsb2.fs"  \ name
-s" [OPTION...] INPUT-FILE"  \ usage
+s" [ OPTION | INPUT-FILE ] ..."  \ usage
 version
 s" Written in Forth with Gforth by Marcos Cruz (programandala.net)" \ extra
 arg-new constant arguments
@@ -261,7 +288,7 @@ arg.verbose-option arguments arg-add-option
 5 constant arg.fb-option
 char b  \ short option
 s" fb"  \ long option
-s" convert to FB format"  \ description
+s" convert to FB format (default)"  \ description
 true  \ switch type
 arg.fb-option arguments arg-add-option
 
@@ -273,34 +300,25 @@ s" convert to FBS format"  \ description
 true  \ switch type
 arg.fbs-option arguments arg-add-option
 
-variable helped  helped off  \ flag: has the help been shown?
-
 : help  ( -- )
   \ Show the help
-  arguments arg-print-help  helped on  ;
+  arguments arg-print-help  ;
 
 : aid  ( -- )
-  \ Show the help if necessary; executed before quitting the program
-  input-files @ helped @ or 0= if  help  then  ;
+  \ Show the help if no option was specified.
+  options @ ?exit  help  ;
 
 : verbose-option  ( -- )
   verbose on s" Verbose mode is on" echo  ;
 
-: ?input-files  ( -- )  \ XXX OLD
-  \ XXX TMP
-  input-files @ abort" Too many input files."
-  1 input-files +!  ;
-
 : input-file  ( ca len -- )
-  \ 2dup cr ." input-file = " type  \ XXX INFORMER
-  \ ?input-files  \ XXX OLD
   2dup >output-filename +files converter -files  ;
 
 : version-option  ( -- )
   arguments arg-print-version  ;
 
 : option  ( n -- )
-  \ dup cr ." option = " . \ XXX INFORMER
+  1 options +!
   case
     arg.help-option       of  help              endof
     arg.version-option    of  version-option    endof
@@ -317,14 +335,12 @@ variable helped  helped off  \ flag: has the help been shown?
 \ --------------------------------------------------------------
 \ Boot
 
-: run  ( -- )
+: init  ( -- )
   argc off  \ make Gforth not process the arguments
-  begin  option?  while  option  repeat  drop  aid  ;
+  verbose off  fbs-format off  options off  ;
+
+: run  ( -- )
+  init  begin  option?  while  option  repeat  drop  aid  ;
 
 run bye
 
-\ --------------------------------------------------------------
-\ History
-
-\ 2015-10-07: Start.
-\ 2015-10-10: First working version.
