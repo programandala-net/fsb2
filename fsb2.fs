@@ -8,7 +8,7 @@
 \ retain the copyright notice(s) and this license in all
 \ redistributed copies and derived works. There is no warranty.
 
-s" A-00-201510101826" 2constant version
+s" A-00-201510101844" 2constant version
 
 \ --------------------------------------------------------------
 \ Requirements
@@ -94,9 +94,9 @@ variable output-fid
 
 : error  ( ca len -- )  -files cr ." ERROR: " type cr cr report abort  ;
 
-: line-too-long  ( ca len -- )  s" Line too long: " 2swap s+ error  ;
+: line-too-long.error  ( ca len -- )  s" Line too long: " 2swap s+ error  ;
 
-: screen-too-long  ( -- )  s" Screen too long." error  ;
+: screen-too-long.error  ( -- )  s" Screen too long." error  ;
 
 \ --------------------------------------------------------------
 \ Converter
@@ -159,15 +159,17 @@ empty-line blank
   screen-line off  ;
 
 : missing-screen-lines?  ( -- f )
-  ~~ screen-line @ 1 [ lines/screen 2 - ] literal between  ~~ ;
+  screen-line @ 1 [ lines/screen 2 - ] literal between  ;
+
+: screen-too-long?  ( -- f )  screen-line @ lines/screen >=  ;
 
 : block-header  ( -- )
-  missing-screen-lines? ~~
-  ~~ if  complete-screen  else  ~~ screen-too-long  then  ;
+  screen-too-long? if  screen-too-long.error  then
+  missing-screen-lines? if  complete-screen  then  ;
 
 : ?length  ( ca len -- )
   \ Abort if _len_ is too big.
-  dup [ c/l 1- ] literal > if    line-too-long
+  dup [ c/l 1- ] literal > if    line-too-long.error
                            else  2drop  then  ;
 
 : (process-line)  ( ca len -- )
