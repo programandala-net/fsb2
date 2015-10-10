@@ -8,12 +8,13 @@
 \ retain the copyright notice(s) and this license in all
 \ redistributed copies and derived works. There is no warranty.
 
-s" A-00-201510101844" 2constant version
+s" A-00-201510102014" 2constant version
 
 \ --------------------------------------------------------------
 \ Requirements
 
-\ From Forth Foundation library
+\ From Forth Foundation Library
+
 include ffl/arg.fs  \ argument parser
 
 \ From Galope
@@ -25,7 +26,7 @@ constant /counted-string
 
 : trim  ( ca len -- ca' len' )  -leading -trailing  ;
 
-: between  ( n n1 n2 -- wf )  1+ within  ;
+: between  ( n n1 n2 -- f )  1+ within  ;
 
 \ --------------------------------------------------------------
 \ Variables and constants
@@ -40,6 +41,7 @@ variable screen       \ counter: current screen
 variable screen-line  \ counter: current line (0..15) of the screen
 
 16 constant lines/screen
+lines/screen 1- constant max-screen-line
 
 \ --------------------------------------------------------------
 \ Files
@@ -105,6 +107,10 @@ variable output-fid
   \ Return the first name _ca2 len2_ of the string _ca1 len1_.
   bl skip 2dup bl scan nip -  ;
 
+: last-name  ( ca1 len1 -- ca2 len2 )
+  \ Return the last name _ca2 len2_ of the string _ca1 len1_.
+  trim begin  2dup bl scan bl skip dup  while  2nip  repeat  2drop  ;
+
 : indented?  ( ca len -- f )
   \ Is the given input line indented?
   if  c@ bl =  else  drop false  then  ;
@@ -121,25 +127,46 @@ variable output-fid
   2dup trim nip if    metacomment? 0=
                 else  2drop false  then  ;
 
-2variable possible-block-marker
+2variable possible-screen-marker
 
 : paren-marker?  ( -- f )
-  possible-block-marker 2@ s" (" str=  ;
+  possible-screen-marker 2@ s" (" str=  ;
 
 : dot-paren-marker?  ( -- f )
-  possible-block-marker 2@ s" .(" str=  ;
+  possible-screen-marker 2@ s" .(" str=  ;
 
-: block-marker?  ( ca len -- f )
-  \ Is the given string the word used as block marker?
-  possible-block-marker 2!
+: paren-screen-marker?  ( ca len -- f )
+  \ Is the given input line a screen header with paren marker?
+  first-name possible-screen-marker 2!
   paren-marker? ?dup ?exit
   dot-paren-marker? ?dup ?exit
   false  ;
 
-: block-header?  ( ca len -- f )
-  \ Is the given input line a block header?
-  2dup indented?  if    2drop false exit
-                  else  first-name block-marker?  then  ;
+false [if]
+
+: screen-header?  ( ca len -- f )
+  \ Is the given input line a screen header?
+  2dup indented?  if    2drop false
+                  else  paren-screen-marker?  then  ;
+
+[else]
+
+: starting-slash?  ( ca1 len1 -- f )  first-name s" \" str=  ;
+
+: ending-slash?  ( ca1 len1 -- f )  last-name s" \" str=  ;
+
+: slash-screen-marker?  ( ca len -- f )
+  \ Is the given input line a screen header with slash marker?
+  2dup starting-slash? if    ending-slash?
+                       else  2drop false  then  ;
+
+: screen-header?  ( ca len -- f )
+  \ Is the given input line a screen header?
+  2dup indented?             if  2drop  false exit  then
+  2dup slash-screen-marker?  if  2drop   true exit  then
+       paren-screen-marker?  ;
+
+[then]
 
 create (empty-line) c/l chars allot
 
@@ -151,19 +178,25 @@ empty-line blank
   \ Pad a line with spaces.
   empty-line s+ drop c/l fbs-format @ +   ;
 
-: line>target  ( ca len -- )
-  padded type  fbs-format @ if  cr  then  ;
+: screen-too-long?  ( -- f )  screen-line @ max-screen-line >  ;
 
-: complete-screen  ( -- )  ~~
-  \ lines/screen screen-line @ - 0 do  empty-line line>target  loop
-  screen-line off  ;
+: next-screen-line  ( -- )
+  1 screen-line +!  screen-too-long? if  screen-line off  then  ;
+
+: line>target  ( ca len -- )
+  screen-line @ 2 .r  \ XXX INFORMER
+  padded type  fbs-format @ if  cr  then  next-screen-line  ;
+
+: complete-screen  ( -- )
+  \ Create empty lines to complete the current screen.
+  lines/screen screen-line @ - 0 ?do  empty-line line>target  loop
+  0 screen-line !  ;
 
 : missing-screen-lines?  ( -- f )
-  screen-line @ 1 [ lines/screen 2 - ] literal between  ;
+  screen-line @ 1 max-screen-line between  ;
 
-: screen-too-long?  ( -- f )  screen-line @ lines/screen >=  ;
-
-: block-header  ( -- )
+: screen-header  ( -- )
+  \ The current line is a screen header. Start a new screen.
   screen-too-long? if  screen-too-long.error  then
   missing-screen-lines? if  complete-screen  then  ;
 
@@ -176,9 +209,7 @@ empty-line blank
   \ Process a valid line of the input file.
   2dup ?length
   1 output-line +!
-  2dup block-header? if  block-header  then
-  line>target
-  1 screen-line +!  ;
+  2dup screen-header? if    screen-header  then  line>target  ;
 
 : process-line  ( ca len -- )
   1 input-line +!
@@ -190,7 +221,7 @@ create line-buffer /counted-string chars allot
   input-line off  output-line off  screen off  screen-line off  ;
 
 : get-line  ( -- ca len f )
-  line-buffer dup c/l input-fid @ read-line throw  ;
+  line-buffer dup /counted-string input-fid @ read-line throw  ;
 
 : init-converter  ( -- )
   init-counters  print>output  ;
@@ -290,11 +321,10 @@ variable helped  helped off  \ flag: has the help been shown?
   argc off  \ make Gforth not process the arguments
   begin  option?  while  option  repeat  drop  aid  ;
 
-argc off \ XXX TMP
-run
+run bye
 
 \ --------------------------------------------------------------
 \ History
 
 \ 2015-10-07: Start.
-\ 2015-10-10: Completed the skeleton.
+\ 2015-10-10: First working version.
