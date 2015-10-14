@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# fsb2-mgt.sh
+# fsb2-abersoft11k.sh
 
-# This file is part of fsb2
+# This file is part of fsb
 # http://programandala.net/en.program.fsb2.html
 
 # ##############################################################
@@ -18,35 +18,40 @@
 # Description
 
 # This program converts a Forth source file from the FSB format
-# to a ZX Spectrum phony MGT disk image (suitable for GDOS,
-# G+DOS or Beta DOS). The disk image will contain the source
-# file directly on the sectors, without file system, to be
-# directly accessed by a Forth system.  This is the format used
-# by the library disk of Solo Forth
-# (http://programanadala.net/en.program.solo_forth.html).
+# to a ZX Spectrum TAP file suitable for Abersoft Forth, after
+# being fixed by the Afera library
+# (http://programandala.net/en.program.afera.html) to accept
+# 11264-byte RAM-disk files).
+#
+# For the 16-KiB RAM-disk files, as implemented by the
+# correspondent Afera module, use <fsb2-abersoft16k.sh> (ZX
+# Spectrum 128 only); for the original system (without Afera)
+# use <fsb2-abersoft.sh>.
 
 # ##############################################################
 # Requirements
 
 # fsb2:
-#   <http://programandala.net/en.program.fsb2.html>
+# 	<http://programandala.net/en.program.fsb2.html>
+# bin2code:
+#   <http://metalbrain.speccy.org/link-eng.htm>.
 
 # ##############################################################
 # Usage (after installation)
 
-#   fsb2mgt filename.fsb
+#   fsb2-abersoft11k filename.fsb
 
 # ##############################################################
 # History
 
-# 2015-10-10: Adapted from fsb
+# 2015-10-12: Adapted from fsb
 # (http://programandala.net/en.program.fsb.html).
 
 # ##############################################################
 # Error checking
 
 if [ "$#" -ne 1 ] ; then
-  echo "Convert a Forth source file from .fsb to .mgt"
+  echo "Convert a Forth source file from .fsb to .tap format for fixed Abersoft Forth"
   echo 'Usage:'
   echo "  ${0##*/} sourcefile.fsb"
   exit 1
@@ -81,14 +86,21 @@ fsb2 $1
 
 basefilename=${1%.*}
 blocksfile=$basefilename.fsb.fb
-mgtfile=$basefilename.mgt
+tapefile=$basefilename.tap
 
-# Do it:
-
-dd if=$blocksfile of=$mgtfile bs=819200 cbs=819200 conv=block,sync 2>> /dev/null
+head --bytes=11264 $blocksfile > DISC
   
-# Remove the temporary file:
+# The bin2code converter uses the host system filename in the
+# TAP file header (there's no option to change it) and Abersoft
+# Forth needs the file in the tape to be called "DISC".  That's
+# why an intermediate file called "DISC" is used.
 
-rm -f $blocksfile
+bin2code DISC $tapefile
+echo "\"$tapefile\" created"
 
+# Remove the intermediate files:
+
+rm -f DISC $blocksfile
+	
 # vim:tw=64:ts=2:sts=2:et:
+

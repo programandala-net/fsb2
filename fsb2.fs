@@ -4,7 +4,7 @@
 
 \ http://programandala.net/en.program.fsb2.html
 
-s" A-00-201510102124" 2constant version
+s" A-00-201510150142" 2constant version
 
 \ --------------------------------------------------------------
 \ Author and license
@@ -19,7 +19,16 @@ s" A-00-201510102124" 2constant version
 \ History
 
 \ 2015-10-07: Start.
+\
 \ 2015-10-10: First working version.
+\
+\ 2015-10-15: Lines and columns are configurable. Not tested yet.
+
+\ --------------------------------------------------------------
+\ To-do
+
+\ Remove the suffix of the input file.
+\ Option to choose a suffix for the output file.
 
 \ --------------------------------------------------------------
 \ Requirements
@@ -28,10 +37,12 @@ only forth definitions  decimal
 warnings off
 
 \ From Forth Foundation Library
+\ (http://irdvo.github.io/ffl/)
 
 include ffl/arg.fs  \ argument parser
 
 \ From Galope
+\ (http://programandala.net/en.program.galope.html)
 
 s" /COUNTED-STRING" environment? 0= [if]  255  [then]
 constant /counted-string
@@ -46,7 +57,7 @@ constant /counted-string
   1+ within  ;
 
 \ --------------------------------------------------------------
-\ Variables and constants
+\ Variables
 
 variable verbose      \ flag: verbose mode? \ XXX not used yet
 variable fbs-format   \ flag: FBS format output instead of FB?
@@ -58,8 +69,14 @@ variable screen-line#  \ counter: current screen line (0..15)
 
 variable options       \ counter: valid options
 
-16 constant lines/screen
-lines/screen 1- constant max-screen-line
+\ --------------------------------------------------------------
+\ Configuration
+
+16 value lines/screen
+64 value columns/line
+
+: max-screen-line  ( -- n ) lines/screen 1-  ;
+: max-screen-char  ( -- n ) columns/line 1-  ;
 
 \ --------------------------------------------------------------
 \ Files
@@ -156,7 +173,6 @@ variable output-fid
 : valid-line?  ( ca len -- f )
   \ Is the given input line a valid line?
   \ A valid line is a non-empty line that is not a metacomment.
-  \ 2dup cr '{' emit type '}' emit cr  \ XXX INFORMER
   2dup trim nip if    metacomment? 0=
                 else  2drop false  then  ;
 
@@ -192,16 +208,17 @@ variable output-fid
   2dup slash-screen-marker?  if  2drop   true exit  then
        paren-screen-marker?  ;
 
-create (empty-line) c/l chars allot
+create (empty-line) /counted-string chars allot
 
 : empty-line  ( ca len -- )
-  (empty-line) c/l  ;
+  (empty-line) columns/line  ;
 
 empty-line blank
 
 : padded  ( ca1 len1 -- ca2 len2 )
-  \ Pad the given input line with spaces.
-  empty-line s+ drop c/l fbs-format @ +   ;
+  \ Pad the given input line to `columns/line` spaces,
+  \ or one less if `fbs-format` is on.
+  empty-line s+ drop columns/line fbs-format @ +   ;
 
 : screen-too-long?  ( -- f )
   \ Is the current screen too long?
@@ -211,7 +228,7 @@ empty-line blank
   \ Update the screen line counter.
   1 screen-line# +!  screen-too-long? if  screen-line# off  then  ;
 
-: line>target  ( ca len -- )
+: print-line  ( ca len -- )
   \ Print the given input line to the output file.
   \ screen-line# @ 2 .r  \ XXX INFORMER
   padded type  fbs-format @ if  cr  then  next-screen-line  ;
@@ -221,8 +238,8 @@ empty-line blank
 
 : (complete-screen)  ( -- )
   \ Create empty lines to complete the current screen.
-  lines/screen screen-line# @ - 0 ?do  empty-line line>target  loop
-  0 screen-line# !  ;
+  lines/screen screen-line# @ - 0 ?do  empty-line print-line  loop
+  screen-line# off  ;
 
 : complete-screen  ( -- )
   \ Complete the current screen, if needed.
@@ -230,18 +247,19 @@ empty-line blank
 
 : finish-screen  ( -- )
   \ Check and complete the current screen.
-  screen-too-long? if  screen-too-long.error  then  complete-screen  ;
+  screen-too-long? if    screen-too-long.error
+                   else  complete-screen  then  ;
 
 : check-length  ( ca len -- )
   \ Abort if the length of the given input line is too long.
-  dup [ c/l 1- ] literal > if    line-too-long.error
-                           else  2drop  then  ;
+  dup max-screen-char > if    line-too-long.error
+                        else  2drop  then  ;
 
 : (process-line)  ( ca len -- )
   \ Process a valid input line.
   2dup check-length
   1 output-line# +!
-  2dup screen-header? if  finish-screen  then  line>target  ;
+  2dup screen-header? if  finish-screen  then  print-line  ;
 
 : process-line  ( ca len -- )
   1 input-line# +!
@@ -266,7 +284,7 @@ create line-buffer /counted-string chars allot
 \ Argument parser
 
 \ Create a new argument parser
-s" fsb2.fs"  \ name
+s" fsb2"  \ name
 s" [ OPTION | INPUT-FILE ] ..."  \ usage
 version
 s" Written in Forth with Gforth by Marcos Cruz (programandala.net)" \ extra
@@ -300,6 +318,22 @@ s" convert to FBS format"  \ description
 true  \ switch type
 arg.fbs-option arguments arg-add-option
 
+\ Add the lines option
+7 constant arg.lines-option
+char l  \ short option
+s" lines"  \ long option
+s" set the lines per screen (default 16)"  \ description
+false  \ switch type
+arg.lines-option arguments arg-add-option
+
+\ Add the columns option
+8 constant arg.columns-option
+char c  \ short option
+s" columns"  \ long option
+s" set the columns per line (default 64)"  \ description
+false  \ switch type
+arg.columns-option arguments arg-add-option
+
 : help  ( -- )
   \ Show the help
   arguments arg-print-help  ;
@@ -309,9 +343,26 @@ arg.fbs-option arguments arg-add-option
   options @ ?exit  help  ;
 
 : verbose-option  ( -- )
-  verbose on s" Verbose mode is on" echo  ;
+  verbose on  s" Verbose mode is on" echo  ;
+
+: fbs-option  ( --  )
+  fbs-format on  s" FBS format is on" echo  ;
+
+: fb-option  ( --  )
+  fbs-format off  s" FB format is on" echo  ;
+
+: columns-option  ( ca len --  )
+  2dup s>number? 0= abort" Wrong columns argument"
+  s>d to columns/line
+  s"  columns per line" s+ echo  ;
+
+: lines-option  ( ca len --  )
+  2dup s>number? 0= abort" Wrong lines argument"
+  s>d to lines/screen  
+  s"  lines per screen" s+ echo  ;
 
 : input-file  ( ca len -- )
+  2dup s" Converting " 2swap s+ echo
   2dup >output-filename +files converter -files  ;
 
 : version-option  ( -- )
@@ -320,15 +371,17 @@ arg.fbs-option arguments arg-add-option
 : option  ( n -- )
   1 options +!
   case
-    arg.help-option       of  help              endof
-    arg.version-option    of  version-option    endof
-    arg.non-option        of  input-file        endof
-    arg.verbose-option    of  verbose-option    endof
-    arg.fb-option         of  fbs-format off    endof
-    arg.fbs-option        of  fbs-format on     endof
+    arg.help-option       of  help            endof
+    arg.version-option    of  version-option  endof
+    arg.non-option        of  input-file      endof
+    arg.verbose-option    of  verbose-option  endof
+    arg.fb-option         of  fb-option       endof
+    arg.fbs-option        of  fbs-option      endof
+    arg.columns-option    of  columns-option  endof
+    arg.lines-option      of  lines-option    endof
   endcase  ;
 
-: option?  ( -- n flag )
+: option?  ( -- n f )
   \ Parse the next option. Is it right?
   arguments arg-parse  dup arg.done <> over arg.error <> and  ;
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# fsb2-mgt.sh
+# fsb2-tap.sh
 
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
@@ -18,35 +18,32 @@
 # Description
 
 # This program converts a Forth source file from the FSB format
-# to a ZX Spectrum phony MGT disk image (suitable for GDOS,
-# G+DOS or Beta DOS). The disk image will contain the source
-# file directly on the sectors, without file system, to be
-# directly accessed by a Forth system.  This is the format used
-# by the library disk of Solo Forth
-# (http://programanadala.net/en.program.solo_forth.html).
+# to a ZX Spectrum TAP file.
 
 # ##############################################################
 # Requirements
 
 # fsb2:
 #   <http://programandala.net/en.program.fsb2.html>
+# bin2code:
+#   <http://metalbrain.speccy.org/link-eng.htm>.
 
 # ##############################################################
 # Usage (after installation)
 
-#   fsb2mgt filename.fsb
+#   fsb2-tap.sh filename.fsb
 
 # ##############################################################
 # History
 
-# 2015-10-10: Adapted from fsb
+# 2015-10-12: Adapted from fsb
 # (http://programandala.net/en.program.fsb.html).
 
 # ##############################################################
 # Error checking
 
 if [ "$#" -ne 1 ] ; then
-  echo "Convert a Forth source file from .fsb to .mgt"
+  echo "Convert a Forth source file from .fsb to .tap format"
   echo 'Usage:'
   echo "  ${0##*/} sourcefile.fsb"
   exit 1
@@ -75,20 +72,28 @@ fi
 # ##############################################################
 # Main
 
+# Create the .fb blocks file from the original .fsb source:
+
 fsb2 $1
 
 # Get the filenames:
 
 basefilename=${1%.*}
 blocksfile=$basefilename.fsb.fb
-mgtfile=$basefilename.mgt
+tapefile=$basefilename.tap
+spectrumfilename=${basefilename##*/}
 
-# Do it:
+# The bin2code converter uses the host system filename as the Spectrum 10-char
+# filename in the TAP file header, and it provides no option to change it.
+# That's why, as a partial solution, the base filename is used instead:
 
-dd if=$blocksfile of=$mgtfile bs=819200 cbs=819200 conv=block,sync 2>> /dev/null
-  
-# Remove the temporary file:
+ln -s $blocksfile $basefilename
 
-rm -f $blocksfile
+bin2code $basefilename $tapefile
+echo "\"$tapefile\" created"
+
+# Remove the intermediate file:
+
+rm -f $blocksfile $basefilename
 
 # vim:tw=64:ts=2:sts=2:et:
