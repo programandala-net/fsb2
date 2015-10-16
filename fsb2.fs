@@ -4,7 +4,7 @@
 
 \ http://programandala.net/en.program.fsb2.html
 
-s" A-00-201510150142" 2constant version
+s" A-00-201510161142" 2constant version
 
 \ --------------------------------------------------------------
 \ Author and license
@@ -23,10 +23,15 @@ s" A-00-201510150142" 2constant version
 \ 2015-10-10: First working version.
 \
 \ 2015-10-15: Lines and columns are configurable. Not tested yet.
+\
+\ 2015-10-16: Converted to standard code, without the Gforth-specific
+\ output redirection.
 
 \ --------------------------------------------------------------
 \ To-do
 
+\ XXX FIXME -- the screen too long check does not work fine
+\
 \ Remove the suffix of the input file.
 \ Option to choose a suffix for the output file.
 
@@ -78,17 +83,29 @@ variable options       \ counter: valid options
 : max-screen-line  ( -- n ) lines/screen 1-  ;
 : max-screen-char  ( -- n ) columns/line 1-  ;
 
+true constant [standard]  immediate
+  \ Standard code instead of Gforth specific?
+
 \ --------------------------------------------------------------
 \ Files
 
 variable input-fid
 variable output-fid
 
-: print>stdout  ( -- )
+[standard] [if]
+
+: print>terminal  ;
+: print>output  ;
+
+[else]
+
+: print>terminal  ( -- )
   stdout to outfile-id  ;
 
 : print>output  ( -- )
   output-fid @ to outfile-id  ;
+
+[then]
 
 : +input ( ca len -- )
   \ Open the input file.
@@ -110,7 +127,7 @@ variable output-fid
 
 : -output  ( -- )
   \ Close the output file.
-  print>stdout
+  print>terminal
   output-fid @ close-file abort" Error while closing the output file."  ;
 
 : -files  ( -- )
@@ -150,12 +167,19 @@ variable output-fid
 \ Converter
 
 : echo  ( ca len -- )
-  verbose @ if    print>stdout type cr  print>output
+  verbose @ if    print>terminal type cr  print>output
             else  2drop  then  ;
 
-: first-name  ( ca1 len1 -- ca2 len2 )
+  \ XXX TODO copy to Galope; used also in Solo Forth
+: /name  ( ca1 len1 -- ca2 len2 ca3 len3 )
+  \ ca1 len1 = Text.
+  \ ca2 len2 = Same text, from the start of its first name.
+  \ ca3 len3 = Same text, from the char after its first name.
+  bl skip 2dup bl scan  ;
+
+  \ XXX TODO copy to Galope; used also in Solo Forth
+: first-name  ( ca1 len1 -- ca2 len2 )  /name nip -  ;
   \ Return the first name _ca2 len2_ of the string _ca1 len1_.
-  bl skip 2dup bl scan nip -  ;
 
 : last-name  ( ca1 len1 -- ca2 len2 )
   \ Return the last name _ca2 len2_ of the string _ca1 len1_.
@@ -170,9 +194,9 @@ variable output-fid
   2dup indented? if     first-name s" \" str=
                  else   2drop false  then  ;
 
-: valid-line?  ( ca len -- f )
-  \ Is the given input line a valid line?
-  \ A valid line is a non-empty line that is not a metacomment.
+: actual-line?  ( ca len -- f )
+  \ Is the given input line an actual code line
+  \ (a non-empty line that is not a metacomment)?
   2dup trim nip if    metacomment? 0=
                 else  2drop false  then  ;
 
@@ -220,50 +244,63 @@ empty-line blank
   \ or one less if `fbs-format` is on.
   empty-line s+ drop columns/line fbs-format @ +   ;
 
-: screen-too-long?  ( -- f )
-  \ Is the current screen too long?
-  screen-line# @ max-screen-line >  ;
+[standard] [if]
 
-: next-screen-line  ( -- )
-  \ Update the screen line counter.
-  1 screen-line# +!  screen-too-long? if  screen-line# off  then  ;
+\ : >output  ( ca len -- )  output-fid @ write-file throw  ;
+: >output  ( ca len -- )  type cr ;
+
+create eol 1 c, 10 c,
+: eol$  ( -- ca len )  eol count  ;
+
+: print-line  ( ca len -- )
+  \ Print the given input line to the output file.
+  padded >output  fbs-format @ if  eol$ >output  then  ;
+
+[else]
 
 : print-line  ( ca len -- )
   \ Print the given input line to the output file.
   \ screen-line# @ 2 .r  \ XXX INFORMER
-  padded type  fbs-format @ if  cr  then  next-screen-line  ;
+  padded type  fbs-format @ if  cr  then  ;
+
+[then]
 
 : missing-screen-lines?  ( -- f )
   screen-line# @ 1 max-screen-line between  ;
 
-: (complete-screen)  ( -- )
+: complete-screen  ( -- )
   \ Create empty lines to complete the current screen.
   lines/screen screen-line# @ - 0 ?do  empty-line print-line  loop
   screen-line# off  ;
 
-: complete-screen  ( -- )
-  \ Complete the current screen, if needed.
-  missing-screen-lines? if  (complete-screen)  then  ;
+: new-screen  ( -- )
+  \ Start a new screen.
+  ." ---------- " cr  \ XXX INFORMER
+  missing-screen-lines? if  complete-screen  then  ;
 
-: finish-screen  ( -- )
-  \ Check and complete the current screen.
-  screen-too-long? if    screen-too-long.error
-                   else  complete-screen  then  ;
+: screen-too-long?  ( -- f )
+  \ Is the current screen too long?
+  screen-line# @ max-screen-line >  ;
 
-: check-length  ( ca len -- )
+: check-screen-length  ( -- )
+  \ Check the current screen length.
+  screen-too-long? if  screen-too-long.error  then  ;
+
+: check-line-length  ( ca len -- )
   \ Abort if the length of the given input line is too long.
   dup max-screen-char > if    line-too-long.error
                         else  2drop  then  ;
 
 : (process-line)  ( ca len -- )
-  \ Process a valid input line.
-  2dup check-length
-  1 output-line# +!
-  2dup screen-header? if  finish-screen  then  print-line  ;
+  \ Process an actual input line.
+  2dup check-line-length  
+  1 output-line# +!  check-screen-length
+  2dup screen-header? if  new-screen  then  print-line  ;
 
 : process-line  ( ca len -- )
+  \ Process an input line.
   1 input-line# +!
-  2dup valid-line?  if  (process-line)  else  2drop  then  ;
+  2dup actual-line?  if  (process-line)  else  2drop  then  ;
 
 create line-buffer /counted-string chars allot
 
@@ -278,7 +315,7 @@ create line-buffer /counted-string chars allot
 
 : converter  ( -- )
   init-converter  begin  get-line  while  process-line  repeat
-  complete-screen  ;
+  new-screen  ;
 
 \ --------------------------------------------------------------
 \ Argument parser
