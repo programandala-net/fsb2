@@ -4,7 +4,7 @@
 
 \ http://programandala.net/en.program.fsb2.html
 
-s" A-00-201510161142" 2constant version
+s" A-00-201510161743" 2constant version
 
 \ --------------------------------------------------------------
 \ Author and license
@@ -24,14 +24,14 @@ s" A-00-201510161142" 2constant version
 \
 \ 2015-10-15: Lines and columns are configurable. Not tested yet.
 \
-\ 2015-10-16: Converted to standard code, without the Gforth-specific
-\ output redirection.
+\ 2015-10-16: Substituted the Gforth-specific output redirection with
+\ standard file words. Fixed the block length check. Improved the
+\ rendering of the first block: no header needed anymore. Simplified
+\ some parts. Added debug option.
 
 \ --------------------------------------------------------------
 \ To-do
 
-\ XXX FIXME -- the screen too long check does not work fine
-\
 \ Remove the suffix of the input file.
 \ Option to choose a suffix for the output file.
 
@@ -61,51 +61,51 @@ constant /counted-string
 : between  ( n n1 n2 -- f )
   1+ within  ;
 
+: /name  ( ca1 len1 -- ca2 len2 ca3 len3 )
+  \ Divide a string at its first name (a substring separated by
+  \ spaces).
+  \ ca1 len1 = Text.
+  \ ca2 len2 = Same text, from the start of its first name.
+  \ ca3 len3 = Same text, from the char after its first name.
+  bl skip 2dup bl scan  ;
+
+: first-name  ( ca1 len1 -- ca2 len2 )  /name nip -  ;
+  \ Get the first name from a string.
+  \ A name is a substring separated by spaces.
+  \ Return the first name _ca2 len2_ of the string _ca1 len1_.
+
+: last-name  ( ca1 len1 -- ca2 len2 )
+  \ Get the last name from a string.
+  \ A name is a substring separated by spaces.
+  trim begin  2dup bl scan bl skip dup  while  2nip  repeat  2drop  ;
+
 \ --------------------------------------------------------------
 \ Variables
 
 variable verbose      \ flag: verbose mode? \ XXX not used yet
 variable fbs-format   \ flag: FBS format output instead of FB?
 
-variable input-line#   \ counter: current line of the input file (1..x)
-variable output-line#  \ counter: current line of the output file (0..x)
-variable screen#       \ counter: current screen (0..x)
-variable screen-line#  \ counter: current screen line (0..15)
+variable input-line#          \ current line of the input file (1..x)
+variable actual-input-line#   \ current actual line of the input file (1..x)
+variable block#               \ current block (0..x)
+variable block-line#          \ current block line (0..15)
 
-variable options       \ counter: valid options
+variable options      \ counter: valid options on the command line
 
 \ --------------------------------------------------------------
 \ Configuration
 
-16 value lines/screen
+16 value lines/block
 64 value columns/line
 
-: max-screen-line  ( -- n ) lines/screen 1-  ;
-: max-screen-char  ( -- n ) columns/line 1-  ;
-
-true constant [standard]  immediate
-  \ Standard code instead of Gforth specific?
+: max-block-line  ( -- n ) lines/block 1-  ;
+: max-block-column  ( -- n ) columns/line 1-  ;
 
 \ --------------------------------------------------------------
 \ Files
 
 variable input-fid
 variable output-fid
-
-[standard] [if]
-
-: print>terminal  ;
-: print>output  ;
-
-[else]
-
-: print>terminal  ( -- )
-  stdout to outfile-id  ;
-
-: print>output  ( -- )
-  output-fid @ to outfile-id  ;
-
-[then]
 
 : +input ( ca len -- )
   \ Open the input file.
@@ -127,7 +127,6 @@ variable output-fid
 
 : -output  ( -- )
   \ Close the output file.
-  print>terminal
   output-fid @ close-file abort" Error while closing the output file."  ;
 
 : -files  ( -- )
@@ -149,9 +148,8 @@ variable output-fid
 : report  ( -- )
   \ Print the counters.
   ." Input line: " input-line#   .counter
-  ." Output line:" output-line#  .counter
-  ." Screen:     " screen#       .counter
-  ." Screen line:" screen-line#  .counter  ;
+  ." Block:      " block#       .counter
+  ." Block line: " block-line#  .counter  ;
 
 : error  ( ca len -- )
   \ Abort with the given error message.
@@ -160,30 +158,14 @@ variable output-fid
 : line-too-long.error  ( ca len -- )
   s" Line too long: " 2swap s+ error  ;
 
-: screen-too-long.error  ( -- )
-  s" Screen too long." error  ;
+: block-too-long.error  ( -- )
+  s" Block too long." error  ;
 
 \ --------------------------------------------------------------
 \ Converter
 
 : echo  ( ca len -- )
-  verbose @ if    print>terminal type cr  print>output
-            else  2drop  then  ;
-
-  \ XXX TODO copy to Galope; used also in Solo Forth
-: /name  ( ca1 len1 -- ca2 len2 ca3 len3 )
-  \ ca1 len1 = Text.
-  \ ca2 len2 = Same text, from the start of its first name.
-  \ ca3 len3 = Same text, from the char after its first name.
-  bl skip 2dup bl scan  ;
-
-  \ XXX TODO copy to Galope; used also in Solo Forth
-: first-name  ( ca1 len1 -- ca2 len2 )  /name nip -  ;
-  \ Return the first name _ca2 len2_ of the string _ca1 len1_.
-
-: last-name  ( ca1 len1 -- ca2 len2 )
-  \ Return the last name _ca2 len2_ of the string _ca1 len1_.
-  trim begin  2dup bl scan bl skip dup  while  2nip  repeat  2drop  ;
+  verbose @ if  type cr  else  2drop  then  ;
 
 : indented?  ( ca len -- f )
   \ Is the given input line indented?
@@ -200,17 +182,17 @@ variable output-fid
   2dup trim nip if    metacomment? 0=
                 else  2drop false  then  ;
 
-2variable possible-screen-marker
+2variable possible-block-marker
 
 : paren-marker?  ( -- f )
-  possible-screen-marker 2@ s" (" str=  ;
+  possible-block-marker 2@ s" (" str=  ;
 
 : dot-paren-marker?  ( -- f )
-  possible-screen-marker 2@ s" .(" str=  ;
+  possible-block-marker 2@ s" .(" str=  ;
 
-: paren-screen-marker?  ( ca len -- f )
-  \ Is the given input line a screen header with paren marker?
-  first-name possible-screen-marker 2!
+: paren-block-marker?  ( ca len -- f )
+  \ Is the given input line a block header with paren marker?
+  first-name possible-block-marker 2!
   paren-marker? ?dup ?exit
   dot-paren-marker? ?dup ?exit
   false  ;
@@ -221,16 +203,16 @@ variable output-fid
 : ending-slash?  ( ca1 len1 -- f )
   last-name s" \" str=  ;
 
-: slash-screen-marker?  ( ca len -- f )
-  \ Is the given input line a screen header with slash marker?
+: slash-block-marker?  ( ca len -- f )
+  \ Is the given input line a block header with slash marker?
   2dup starting-slash? if    ending-slash?
                        else  2drop false  then  ;
 
-: screen-header?  ( ca len -- f )
-  \ Is the given input line a screen header?
-  2dup indented?             if  2drop  false exit  then
-  2dup slash-screen-marker?  if  2drop   true exit  then
-       paren-screen-marker?  ;
+: block-header?  ( ca len -- f )
+  \ Is the given input line a block header?
+  2dup indented?            if  2drop  false exit  then
+  2dup slash-block-marker?  if  2drop   true exit  then
+       paren-block-marker?  ;
 
 create (empty-line) /counted-string chars allot
 
@@ -244,78 +226,91 @@ empty-line blank
   \ or one less if `fbs-format` is on.
   empty-line s+ drop columns/line fbs-format @ +   ;
 
-[standard] [if]
-
-\ : >output  ( ca len -- )  output-fid @ write-file throw  ;
-: >output  ( ca len -- )  type cr ;
+: >output  ( ca len -- )  output-fid @ write-file throw  ;
 
 create eol 1 c, 10 c,
 : eol$  ( -- ca len )  eol count  ;
 
-: print-line  ( ca len -- )
+defer print-line  ( ca len -- )
+  \ Print the given input line.
+
+: line>output  ( ca len -- )
   \ Print the given input line to the output file.
   padded >output  fbs-format @ if  eol$ >output  then  ;
 
-[else]
+' line>output is print-line
 
-: print-line  ( ca len -- )
-  \ Print the given input line to the output file.
-  \ screen-line# @ 2 .r  \ XXX INFORMER
-  padded type  fbs-format @ if  cr  then  ;
+: line>display  ( ca len -- )
+  \ Print the given input line to the display, for debugging.
+  block# @ 3 .r  block-line# @ 3 .r  ."  | " type cr  ;
 
-[then]
+: new-line  ( ca len -- )
+  print-line 1 block-line# +!  ;
 
-: missing-screen-lines?  ( -- f )
-  screen-line# @ 1 max-screen-line between  ;
+: missing-block-lines?  ( -- f )
+  block-line# @ 1 max-block-line between  ;
 
-: complete-screen  ( -- )
-  \ Create empty lines to complete the current screen.
-  lines/screen screen-line# @ - 0 ?do  empty-line print-line  loop
-  screen-line# off  ;
+: (complete-block)  ( -- )
+  \ Complete the current block with empty lines.
+  lines/block block-line# @ - 0 ?do  empty-line new-line  loop  ;
 
-: new-screen  ( -- )
-  \ Start a new screen.
-  ." ---------- " cr  \ XXX INFORMER
-  missing-screen-lines? if  complete-screen  then  ;
+: complete-block  ( -- )
+  \ Complete the current block with empty lines, if needed.
+  missing-block-lines? if  (complete-block)  then  ;
 
-: screen-too-long?  ( -- f )
-  \ Is the current screen too long?
-  screen-line# @ max-screen-line >  ;
+: update-block#  ( -- )
+  \ Update the number of the current block.
+  \ The calculation is needed because the first block
+  \ (number 0) may start with a block header line
+  \ or an ordinary line.
+  actual-input-line# @ 1 <> abs block# +!  ;
 
-: check-screen-length  ( -- )
-  \ Check the current screen length.
-  screen-too-long? if  screen-too-long.error  then  ;
+: new-block  ( -- )
+  \ Start a new block.
+  complete-block  update-block#  block-line# off  ;
+
+: block-too-long?  ( -- f )
+  \ Is the current block too long?
+  block-line# @ max-block-line >  ;
+
+: check-block-length  ( -- )
+  \ Check the current block length.
+
+  \ XXX INFORMER
+  \ ." in check-block-length : " block-line# ? type cr
+
+  block-too-long? if  block-too-long.error  then  ;
 
 : check-line-length  ( ca len -- )
   \ Abort if the length of the given input line is too long.
-  dup max-screen-char > if    line-too-long.error
-                        else  2drop  then  ;
+  dup max-block-column > if    line-too-long.error
+                          else  2drop  then  ;
 
 : (process-line)  ( ca len -- )
   \ Process an actual input line.
-  2dup check-line-length  
-  1 output-line# +!  check-screen-length
-  2dup screen-header? if  new-screen  then  print-line  ;
+  1 actual-input-line# +!
+  2dup check-line-length
+  2dup block-header? if    new-block
+                     else  check-block-length
+                     then  new-line  ;
 
 : process-line  ( ca len -- )
   \ Process an input line.
   1 input-line# +!
-  2dup actual-line?  if  (process-line)  else  2drop  then  ;
+  2dup actual-line? if  (process-line)  else  2drop  then  ;
 
 create line-buffer /counted-string chars allot
-
-: init-counters  ( -- )
-  input-line# off  output-line# off  screen# off  screen-line# off  ;
 
 : get-line  ( -- ca len f )
   line-buffer dup /counted-string input-fid @ read-line throw  ;
 
 : init-converter  ( -- )
-  init-counters  print>output  ;
+  input-line# off  actual-input-line# off
+  block# off  block-line# off  ;
 
 : converter  ( -- )
   init-converter  begin  get-line  while  process-line  repeat
-  new-screen  ;
+  complete-block  ;
 
 \ --------------------------------------------------------------
 \ Argument parser
@@ -359,7 +354,7 @@ arg.fbs-option arguments arg-add-option
 7 constant arg.lines-option
 char l  \ short option
 s" lines"  \ long option
-s" set the lines per screen (default 16)"  \ description
+s" set the lines per block (default 16)"  \ description
 false  \ switch type
 arg.lines-option arguments arg-add-option
 
@@ -371,6 +366,14 @@ s" set the columns per line (default 64)"  \ description
 false  \ switch type
 arg.columns-option arguments arg-add-option
 
+\ Add the debug option
+9 constant arg.debug-option
+char d  \ short option
+s" debug"  \ long option
+s" activate debugging mode (output to the screen)"  \ description
+true  \ switch type
+arg.debug-option arguments arg-add-option
+
 : help  ( -- )
   \ Show the help
   arguments arg-print-help  ;
@@ -381,6 +384,12 @@ arg.columns-option arguments arg-add-option
 
 : verbose-option  ( -- )
   verbose on  s" Verbose mode is on" echo  ;
+
+: debug  ( -- )
+  ['] line>display is print-line  ;
+
+: debug-option  ( -- )
+  debug s" debug mode is on" echo  ;
 
 : fbs-option  ( --  )
   fbs-format on  s" FBS format is on" echo  ;
@@ -395,8 +404,8 @@ arg.columns-option arguments arg-add-option
 
 : lines-option  ( ca len --  )
   2dup s>number? 0= abort" Wrong lines argument"
-  s>d to lines/screen  
-  s"  lines per screen" s+ echo  ;
+  s>d to lines/block  
+  s"  lines per block" s+ echo  ;
 
 : input-file  ( ca len -- )
   2dup s" Converting " 2swap s+ echo
@@ -408,14 +417,15 @@ arg.columns-option arguments arg-add-option
 : option  ( n -- )
   1 options +!
   case
-    arg.help-option       of  help            endof
-    arg.version-option    of  version-option  endof
-    arg.non-option        of  input-file      endof
-    arg.verbose-option    of  verbose-option  endof
-    arg.fb-option         of  fb-option       endof
-    arg.fbs-option        of  fbs-option      endof
-    arg.columns-option    of  columns-option  endof
-    arg.lines-option      of  lines-option    endof
+    arg.help-option       of  help              endof
+    arg.version-option    of  version-option    endof
+    arg.non-option        of  input-file        endof
+    arg.verbose-option    of  verbose-option    endof
+    arg.fb-option         of  fb-option         endof
+    arg.fbs-option        of  fbs-option        endof
+    arg.columns-option    of  columns-option    endof
+    arg.lines-option      of  lines-option      endof
+    arg.debug-option      of  debug-option      endof
   endcase  ;
 
 : option?  ( -- n f )
