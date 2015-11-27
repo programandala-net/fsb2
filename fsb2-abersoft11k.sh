@@ -2,7 +2,7 @@
 
 # fsb2-abersoft11k.sh
 
-# This file is part of fsb
+# This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
 
 # ##############################################################

@@ -34,13 +34,14 @@
 # ##############################################################
 # Usage (after installation)
 
-#   fsb2mgt filename.fsb
+#   fsb2-mgt filename.fsb
 
 # ##############################################################
 # History
 
 # 2015-10-10: Adapted from fsb
 # (http://programandala.net/en.program.fsb.html).
+# 2015-11-21: Typo.
 
 # ##############################################################
 # Error checking
