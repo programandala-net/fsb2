@@ -1,0 +1,57 @@
+  \ Block 0 does not need a header line.
+
+first block
+
+line 1
+line 2
+line 3
+line 4
+line 5
+line 6
+line 7
+line 8
+line 9
+line 10
+line 11
+line 12
+
+  \ metacomment
+  \ metacomment
+
+line 13
+line 14
+line 15
+
+  \ metacomment
+  \ metacomment
+
+\ second block, with slash-header \
+
+line 1
+
+line 2
+
+.( third block, with dot-paren header)
+
+line 1 
+
+
+line 2
+
+  \ metacomment
+  \ metacomment
+  \ metacomment
+  \ metacomment
+
+line 3
+
+  ( ordinary comment)
+
+( last block, with paren-header )
+
+line 1
+line 2
+line 3
+line 4
+
+  \ Must be completed by the converter.
