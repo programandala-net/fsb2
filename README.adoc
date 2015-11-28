@@ -38,7 +38,7 @@ and provide the same target formats.
 But there are some differences:
 
 - fsb is much slower.
-- fsb recognizes two directives: `#vim` and `#trace`.
+- fsb recognizes three directives: `#previm`, `#vim` and `#trace`.
 - fsb allows comments and code at the right of a
   backslash-format block header.
 - fsb removes the source filename extension from the target
