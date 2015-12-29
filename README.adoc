@@ -1,6 +1,7 @@
 = fsb2
 :author: Marcos Cruz (programandala.net)
-:revdate: 2015-11-28
+:revdate: 2015-12-29
+:linkattrs:
 
 // Copyright (C) 2015 Marcos Cruz (programandala.net)
 //
@@ -15,7 +16,7 @@
 
 fsb2 is a preprocessor and converter of Forth source files,
 written in Forth.  Its goal is to make it easy to edit and
-mantain Forth source files, in ordinary text format, for Forth
+maintain Forth source files, in ordinary text format, for Forth
 systems that use blocks files.
 
 Following some simple layout conventions, the source file can be
@@ -30,7 +31,8 @@ http://programandala.net/en.program.fsb2.html.
 
 fsb2 was written as a faster and simpler alternative to a
 previous project of the author,
-http://programandala.net/en.program.fsb.html[fsb], which is
+http://programandala.net/en.program.fsb.html[fsb]
+(http://github.com/programandala-net/fsb[fsb in GitHub, role="external"], which is
 written in Vim.
 
 fsb and fsb2 do the same: they convert the same source format
@@ -52,9 +54,10 @@ fsb2 has been written for Gforth and tested only with Gforth.
 Probably the changes required to run on any other standard Forth
 system are very simple. This task is on the to-do list.
 
-- http://www.gnu.org/software/gforth/[Gforth]
+- http://www.gnu.org/software/gforth/[Gforth, role="external"]
 
-- http://irdvo.github.io/ffl/[Forth Foundation Library]
+- http://irdvo.github.io/ffl/[Forth Foundation Library,
+  role="external"]
 
 - Some additional converters have specific requirements. See
   their source code (the files with the ".sh" filename
@@ -220,6 +223,8 @@ improved by the Afera library (one file called "DISC", with 16
 
 fsb2-mgt :: ZX Spectrum MGT file (disk image for GDOS, G+DOS or
 Beta DOS), with the Forth source saved on the sectors.
+
+fsb-superforth :: Sinclair QL SuperForth individual block files.
 
 fsb2-tap :: ZX Spectrum TAP file (tape), for any ZX Spectrum
 Forth.

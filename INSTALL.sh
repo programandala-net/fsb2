@@ -30,6 +30,7 @@
 # History
 
 # 2015-10-12: First version.
+# 2015-12-29: SuperForth converter.
 
 # ##############################################################
 
@@ -40,4 +41,5 @@ eval ${INSTALLCMD}fsb2-abersoft.sh $BINDIR/fsb2-abersoft
 eval ${INSTALLCMD}fsb2-abersoft11k.sh $BINDIR/fsb2-abersoft11k
 eval ${INSTALLCMD}fsb2-abersoft16k.sh $BINDIR/fsb2-abersoft16k
 eval ${INSTALLCMD}fsb2-mgt.sh $BINDIR/fsb2-mgt
+eval ${INSTALLCMD}fsb2-superforth.sh $BINDIR/fsb2-superforth
 eval ${INSTALLCMD}fsb2-tap.sh $BINDIR/fsb2-tap
