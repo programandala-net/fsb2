@@ -1,6 +1,6 @@
 = fsb2
 :author: Marcos Cruz (programandala.net)
-:revdate: 2015-12-29
+:revdate: 2015-12-30
 :linkattrs:
 
 // Copyright (C) 2015 Marcos Cruz (programandala.net)
@@ -32,7 +32,7 @@ http://programandala.net/en.program.fsb2.html.
 fsb2 was written as a faster and simpler alternative to a
 previous project of the author,
 http://programandala.net/en.program.fsb.html[fsb]
-(http://github.com/programandala-net/fsb[fsb in GitHub, role="external"], which is
+(http://github.com/programandala-net/fsb[fsb in GitHub, role="external"]), which is
 written in Vim.
 
 fsb and fsb2 do the same: they convert the same source format
@@ -224,7 +224,7 @@ improved by the Afera library (one file called "DISC", with 16
 fsb2-mgt :: ZX Spectrum MGT file (disk image for GDOS, G+DOS or
 Beta DOS), with the Forth source saved on the sectors.
 
-fsb-superforth :: Sinclair QL SuperForth individual block files.
+fsb2-superforth :: Sinclair QL SuperForth individual block files.
 
 fsb2-tap :: ZX Spectrum TAP file (tape), for any ZX Spectrum
 Forth.
