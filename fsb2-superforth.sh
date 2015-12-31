@@ -39,6 +39,9 @@
 # History
 
 # 2015-12-28: Start.
+#
+# 2015-12-31: Removed the redirection from `mmv`; it was a
+# remain of a previous version and caused trouble.
 
 # ##############################################################
 # Error checking
@@ -91,7 +94,7 @@ split \
 # Rename the block files, remove the leading zeros from the
 # numeric suffix:
 
-mmv "BLK*[1-9]*" "BLK#2#3" &> /dev/null;
+mmv "BLK*[1-9]*" "BLK#2#3"
 
 # Remove block 0:
 
