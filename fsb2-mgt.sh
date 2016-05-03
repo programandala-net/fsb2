@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # fsb2-mgt.sh
 
@@ -8,7 +8,7 @@
 # ##############################################################
 # Author and license
 
-# Copyright (C) 2015 Marcos Cruz (programandala.net)
+# Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
@@ -42,6 +42,8 @@
 # 2015-10-10: Adapted from fsb
 # (http://programandala.net/en.program.fsb.html).
 # 2015-11-21: Typo.
+# 2016-05-02: Start implementing the size check.
+# 2016-05-03: Finish the size check.
 
 # ##############################################################
 # Error checking
@@ -84,10 +86,27 @@ basefilename=${1%.*}
 blocksfile=$basefilename.fsb.fb
 mgtfile=$basefilename.mgt
 
+# Get the size of the file:
+du_size=$(du -sk $blocksfile)
+
+# Extract the size from the left of the string:
+file_size=${du_size%%[^0-9]*}
+
+#echo "File size=($file_size)"
+#echo "$blocksfile is $file_size Kib"
+
+if [ $file_size -gt "800" ]
+then
+  echo "Error:"
+  echo "The size of $blocksfile is $file_size KiB."
+  echo "The maximum capacity of an MGT disk image is 800 KiB."
+  exit 64
+fi
+
 # Do it:
 
 dd if=$blocksfile of=$mgtfile bs=819200 cbs=819200 conv=block,sync 2>> /dev/null
-  
+
 # Remove the temporary file:
 
 rm -f $blocksfile

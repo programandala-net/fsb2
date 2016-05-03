@@ -1,0 +1,14 @@
+= fsb2 to-do list
+:author: Marcos Cruz (programandala.net)
+:revdate: 2016-03-20
+
+// This file is part of fsb2
+// http://programandala.net/en.program.fsb2.html
+
+// This file is written in AsciiDoc/Asciidoctor format.
+// See <http://asciidoctor.org>.
+
+2016-03-20: Sometimes slash comments are ignored on the left margin.
+This has been detected during the development of
+http://programandala.net/en.program.solo_forth.html[Solo Forth].  The
+error conditions are still unknown.

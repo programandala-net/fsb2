@@ -3,6 +3,9 @@
 :revdate: 2015-12-30
 :linkattrs:
 
+// This file is part of fsb2
+// http://programandala.net/en.program.fsb2.html
+
 // Copyright (C) 2015 Marcos Cruz (programandala.net)
 //
 // You may do whatever you want with this work, so long as you
