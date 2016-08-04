@@ -4,12 +4,12 @@
 \ A Forth source converter.
 \ http://programandala.net/en.program.fsb2.html
 
-: version  ( -- ca len )  s" A-01-20151127" ;
+include ./fsb2_VERSION.fs
 
 \ --------------------------------------------------------------
 \ Author and license
 
-\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
 
 \ You may do whatever you want with this work, so long as you retain
 \ the copyright notice(s) and this license in all redistributed copies
@@ -69,14 +69,13 @@ constant /counted-string
 
 : first-name  ( ca1 len1 -- ca2 len2 )
   /name nip -  ;
-  \ Get the first name from a string.
-  \ A name is a substring separated by spaces.
-  \ Return the first name _ca2 len2_ of the string _ca1 len1_.
+  \ Return the first name _ca2 len2_ (a substring separated by spaces)
+  \ of string _ca1 len1_.
 
 : last-name  ( ca1 len1 -- ca2 len2 )
   trim begin  2dup bl scan bl skip dup  while  2nip  repeat  2drop  ;
-  \ Get the last name from a string.
-  \ A name is a substring separated by spaces.
+  \ Return the last name _ca2 len2_ (a substring separated by spaces)
+  \ of string _ca1 len1_.
 
 \ --------------------------------------------------------------
 \ Variables
@@ -322,7 +321,7 @@ create line-buffer /counted-string chars allot
 
 s" fsb2"  \ name
 s" [ OPTION | INPUT-FILE ] ..."  \ usage
-version
+fsb2-version
 s" Written in Forth with Gforth by Marcos Cruz (programandala.net)" \ extra
 arg-new constant arguments
 
@@ -484,4 +483,8 @@ go bye
 \ 2015-11-26: Small simplification.
 \
 \ 2015-11-27: Unified the format of comments.
-
+\
+\ 2016-05-13: Modified some comments.
+\
+\ 2016-08-03: Change the version number to Semantic Versioning
+\ (http://semver.org) and move it to its own file <fsb2_VERSION.fs>.

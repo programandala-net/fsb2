@@ -30,16 +30,19 @@
 # History
 
 # 2015-10-12: First version.
-# 2015-12-29: SuperForth converter.
+# 2015-12-29: Add SuperForth converter.
+# 2016-08-03: Add version file and TRD converter.
 
 # ##############################################################
 
 . ./CONFIG.sh
 
 rm -f $BINDIR/fsb2
+rm -f $BINDIR/fsb2_VERSION
 rm -f $BINDIR/fsb2-abersoft
 rm -f $BINDIR/fsb2-abersoft11k
 rm -f $BINDIR/fsb2-abersoft16k
 rm -f $BINDIR/fsb2-mgt
 rm -f $BINDIR/fsb2-superforth
 rm -f $BINDIR/fsb2-tap
+rm -f $BINDIR/fsb2-trd
