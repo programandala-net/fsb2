@@ -23,6 +23,9 @@
 # file system, to be directly accessed by a Forth system.  This is the
 # format used by the library disk of Solo Forth
 # (http://programandala.net/en.program.solo_forth.html).
+#
+# XXX TODO -- Add track 0 (16 sectors, 4 KiB) at the start, created by
+# <make_trd_track_0.fs>, which is part of Solo Forth.
 
 # ##############################################################
 # Requirements
@@ -31,22 +34,28 @@
 #   <http://programandala.net/en.program.fsb2.html>
 
 # ##############################################################
-# Usage (after installation)
+# Usage
 
-#   fsb2-trd filename.fsb
+#   fsb2-trd.sh filename.fsb [disk_label]
 
 # ##############################################################
 # History
 
 # 2016-08-03: Start. Adapt from fsb2-mgt.sh.
+#
+# 2016-08-11: Add sector 0, which is created by a Gforth program
+# originally written for Solo Forth
+# (http://programandala.net/en.program.solo_forth.html). Without
+# sector 0, which contains the disk metadata, the disk image is not
+# recognized by the emulator and can not be mounted.
 
 # ##############################################################
 # Error checking
 
-if [ "$#" -ne 1 ] ; then
+if [[ "$#" -ne 1 && "$#" -ne 2 ]] ; then
   echo "Convert a Forth source file from .fsb to .trd"
   echo 'Usage:'
-  echo "  ${0##*/} sourcefile.fsb"
+  echo "  ${0##*/} sourcefile.fsb [disk_label]"
   exit 1
 fi
 
@@ -73,13 +82,19 @@ fi
 # ##############################################################
 # Main
 
+# Get the first 8 characters of the disk label, padded with spaces:
+disk_label="${2}        "
+disk_label=${2:0:8}
+
+# Convert the .fsb file to .fb:
 fsb2 $1
 
-# Get the filenames:
-
+# Filenames:
 basefilename=${1%.*}
 blocksfile=$basefilename.fsb.fb
 trdfile=$basefilename.trd
+track0file="/tmp/fsb2-trd.track_0.bin"
+tracks1to79file="/tmp/fsb2-trd.tracks_1-79.bin"
 
 # Get the size of the file:
 du_size=$(du -sk $blocksfile)
@@ -88,23 +103,27 @@ du_size=$(du -sk $blocksfile)
 file_size=${du_size%%[^0-9]*}
 
 #echo "File size=($file_size)"
-#echo "$blocksfile is $file_size KiB"
+#echo "$blocksfile is $file_size Kib"
 
-if [ $file_size -gt "640" ]
+if [ $file_size -gt "636" ]
 then
   echo "Error:"
   echo "The size of $blocksfile is $file_size KiB."
-  echo "The maximum capacity of a TRD disk image is 640 KiB."
+  echo "The maximum capacity of a formated TRD disk image is 636 KiB."
   exit 64
 fi
 
-# Do it:
+# Create sector 0 of the disk image:
+fsb2-trd.track_0.fs $track0file $disk_label
 
-dd if=$blocksfile of=$trdfile bs=655360 cbs=655360 conv=block,sync 2>> /dev/null
+# Create sectors 1..79 of the disk image:
+dd if=$blocksfile of=$tracks1to79file bs=651264 cbs=651264 conv=block,sync 2>> /dev/null
 
-# Remove the temporary file:
+# Create the final disk image:
+cat $track0file $tracks1to79file > $trdfile
 
-rm -f $blocksfile
+# Remove the temporary files:
+rm -f $blocksfile $track0file $tracks1to79file
 
 # vim:tw=64:ts=2:sts=2:et:
 

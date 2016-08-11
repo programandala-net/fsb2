@@ -24,7 +24,7 @@
 # ##############################################################
 # Usage
 
-#   INSTALL.sh
+# INSTALL.sh
 
 # ##############################################################
 # History
@@ -32,6 +32,7 @@
 # 2015-10-12: First version.
 # 2015-12-29: Add SuperForth converter.
 # 2016-08-03: Add version file and TRD converter.
+# 2016-08-11: Add <fsb2-trd.track_0.fs>.
 
 # ##############################################################
 
@@ -46,3 +47,4 @@ eval ${INSTALLCMD}fsb2-mgt.sh $BINDIR/fsb2-mgt
 eval ${INSTALLCMD}fsb2-superforth.sh $BINDIR/fsb2-superforth
 eval ${INSTALLCMD}fsb2-tap.sh $BINDIR/fsb2-tap
 eval ${INSTALLCMD}fsb2-trd.sh $BINDIR/fsb2-trd
+eval ${INSTALLCMD}fsb2-trd.track_0.fs $BINDIR

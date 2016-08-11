@@ -30,9 +30,13 @@
 # History
 
 # 2015-10-12: First version.
+#
 # 2015-12-29: Add SuperForth converter.
+#
 # 2016-08-03: Add version file and TRD converter.
-# 2016-08-11: Fix the filename of the version.
+#
+# 2016-08-11: Fix the filename of the version. Add
+# <fsb2-trd.track_0.fs>.
 
 # ##############################################################
 
@@ -47,3 +51,4 @@ rm -f $BINDIR/fsb2-mgt
 rm -f $BINDIR/fsb2-superforth
 rm -f $BINDIR/fsb2-tap
 rm -f $BINDIR/fsb2-trd
+rm -f $BINDIR/fsb2-trd.track_0.fs
