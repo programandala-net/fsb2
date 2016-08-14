@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-# fsb2-superforth.sh
+# fsb2-dsk.sh
 
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
@@ -8,7 +8,7 @@
 # ##############################################################
 # Author and license
 
-# Copyright (C) 2015 Marcos Cruz (programandala.net)
+# Copyright (C) 2016 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
@@ -17,39 +17,37 @@
 # ##############################################################
 # Description
 
-# This program converts a Forth source file from the FSB format
-# to a set of individual block files suitable for Sinclair QL
-# SuperForth.
+# This program converts a Forth source file from the FSB format to a
+# ZX Spectrum phony DSK disk image (suitable for TR-DOS), The disk
+# image will contain the source file directly on the sectors, without
+# file system, to be directly accessed by a Forth system.  This is the
+# format used by the library disk of Solo Forth
+# (http://programandala.net/en.program.solo_forth.html).
+#
+# XXX TODO -- Add track 0 (16 sectors, 4 KiB) at the start, created by
+# <make_trd_track_0.fs>, which is part of Solo Forth.
 
 # ##############################################################
 # Requirements
 
 # fsb2:
 #   <http://programandala.net/en.program.fsb2.html>
-#
-# mmv, by Vladimir Lanin:
-#   Included in most Linux distros.
 
 # ##############################################################
-# Usage (after installation)
+# Usage
 
-#   fsb2-superforth filename.fsb
+#   fsb2-dsk.sh filename.fsb
 
 # ##############################################################
 # History
 
-# 2015-12-28: Start.
-#
-# 2015-12-31: Removed the redirection from `mmv`; it was a
-# remain of a previous version and caused trouble.
-#
-# 2016-08-13: Typo.
+# 2016-08-14: Start.
 
 # ##############################################################
 # Error checking
 
-if [ "$#" -ne 1 ] ; then
-  echo "Convert a Forth source file from .fsb to SuperForth block files"
+if [[ "$#" -ne 1 && "$#" -ne 2 ]] ; then
+  echo "Convert a Forth source file from .fsb to .dsk"
   echo 'Usage:'
   echo "  ${0##*/} sourcefile.fsb"
   exit 1
@@ -78,32 +76,35 @@ fi
 # ##############################################################
 # Main
 
+# Convert the .fsb file to .fb:
 fsb2 $1
 
-# Get the filenames:
-
+# Filenames:
 basefilename=${1%.*}
-blocksfile=$basefilename.fsb.fb
+blocksfile=$basefilename.fb
+mv $basefilename.fsb.fb $blocksfile
 
-# Split the blocks file into individual files of one block:
+# Get the size of the file:
+du_size=$(du -sk $blocksfile)
 
-split \
-  --bytes=1024 \
-  --numeric-suffixes \
-  --suffix-length=4 \
-  $blocksfile BLK
+# Extract the size from the left of the string:
+file_size=${du_size%%[^0-9]*}
 
-# Rename the block files, remove the leading zeros from the
-# numeric suffix:
+#echo "File size=($file_size)"
+#echo "$blocksfile is $file_size Kib"
 
-mmv "BLK*[1-9]*" "BLK#2#3"
+if [ $file_size -gt "720" ]
+then
+  echo "Error:"
+  echo "The size of $blocksfile is $file_size KiB."
+  echo "The maximum capacity of a DSK disk image is 720 KiB."
+  exit 64
+fi
 
-# Remove block 0:
+# Create the disk image:
+fb2dsk $blocksfile
 
-rm -f BLK0*
-
-# Remove the blocks file:
-
+# Remove the temporary files:
 rm -f $blocksfile
 
 # vim:tw=64:ts=2:sts=2:et:

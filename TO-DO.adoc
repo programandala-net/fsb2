@@ -12,3 +12,5 @@
 This has been detected during the development of
 http://programandala.net/en.program.solo_forth.html[Solo Forth].  The
 error conditions are still unknown.
+
+2016-08-14: Extract the parameter checks that are common to all modules.

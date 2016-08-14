@@ -33,6 +33,7 @@
 # 2015-12-29: Add SuperForth converter.
 # 2016-08-03: Add version file and TRD converter.
 # 2016-08-11: Add <fsb2-trd.track_0.fs>.
+# 2016-08-14: Add <fsb2-dsk.sh> and <fb2dsk.fs>.
 
 # ##############################################################
 
@@ -48,3 +49,5 @@ eval ${INSTALLCMD}fsb2-superforth.sh $BINDIR/fsb2-superforth
 eval ${INSTALLCMD}fsb2-tap.sh $BINDIR/fsb2-tap
 eval ${INSTALLCMD}fsb2-trd.sh $BINDIR/fsb2-trd
 eval ${INSTALLCMD}fsb2-trd.track_0.fs $BINDIR
+eval ${INSTALLCMD}fsb2-dsk.sh $BINDIR/fsb2-dsk
+eval ${INSTALLCMD}fb2dsk.fs $BINDIR/fb2dsk

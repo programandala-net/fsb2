@@ -37,6 +37,8 @@
 #
 # 2016-08-11: Fix the filename of the version. Add
 # <fsb2-trd.track_0.fs>.
+#
+# 2016-08-14: Add <fsb2-dsk> and <fb2dsk>.
 
 # ##############################################################
 
@@ -52,3 +54,5 @@ rm -f $BINDIR/fsb2-superforth
 rm -f $BINDIR/fsb2-tap
 rm -f $BINDIR/fsb2-trd
 rm -f $BINDIR/fsb2-trd.track_0.fs
+rm -f $BINDIR/fsb2-dsk
+rm -f $BINDIR/fb2dsk
