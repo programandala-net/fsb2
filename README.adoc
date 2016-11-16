@@ -1,12 +1,12 @@
 = fsb2
 :author: Marcos Cruz (programandala.net)
-:revdate: 2015-12-30
+:revdate: 2016-11-16
 :linkattrs:
 
 // This file is part of fsb2
 // http://programandala.net/en.program.fsb2.html
 
-// Copyright (C) 2015 Marcos Cruz (programandala.net)
+// Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
 //
 // You may do whatever you want with this work, so long as you
 // retain the copyright notice(s) and this license in all
@@ -35,8 +35,8 @@ http://programandala.net/en.program.fsb2.html.
 fsb2 was written as a faster and simpler alternative to a
 previous project of the author,
 http://programandala.net/en.program.fsb.html[fsb]
-(http://github.com/programandala-net/fsb[fsb in GitHub, role="external"]), which is
-written in Vim.
+(http://github.com/programandala-net/fsb[fsb in GitHub,
+role="external"]), which is written in VimL.
 
 fsb and fsb2 do the same: they convert the same source format
 and provide the same target formats.
@@ -105,7 +105,7 @@ Block headers must be marked with a comment. There are three
 ways to do it:
 
 1. A paren comment that starts at the first column of the line.
-2. A backslash comment that starts at the first columen of the line
+2. A backslash comment that starts at the first column of the line
 *and* ends with a second closing slash. This alternative is
 provided in order to include words with closing parens.
 3. A dot-paren comment that starts at the first column of the line.
@@ -138,7 +138,7 @@ Examples:
 
 ----
 
-The only header comment that is not necessary is the first one,
+The only header comment which is not mandatory is the first one,
 for block 0. When there is something (except metacomments, see
 below) at the top of the file, it's suppossed to be the
 contents of the first block.  Example:
@@ -231,5 +231,19 @@ fsb2-superforth :: Sinclair QL SuperForth individual block files.
 
 fsb2-tap :: ZX Spectrum TAP file (tape), for any ZX Spectrum
 Forth.
+
+fsb2-trd :: ZX Spectrum TRD file (disk image for TR-DOS), with
+the Forth source saved on the sectors, except track 0, which is
+used by the DOS to recognize the disk.
+
+Support for the DSK disk images used by +3DOS is under development.
+
+== Installation
+
+. Edit <CONFIG.sh> and comment/uncomment your options, which are
+  explained in the file.
+. Execute <INSTALL.sh>.
+
+You can uninstall the program executing <UNINSTALL.sh>.
 
 // vim: tw=64:ts=2:sts=2:sw=2:et
