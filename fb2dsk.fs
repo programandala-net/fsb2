@@ -5,7 +5,7 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version  ( -- ca len )  s" 1.0.0+201608141208"  ;
+: fb2dsk-version  ( -- ca len )  s" 1.0.1+201608141456"  ;
 
 \ Last modified: 201608141215
 
@@ -44,10 +44,11 @@
 \ Requirements
 
 \ From Galope
+\ http://programandala.net/en.program.galope.html
 
 require galope/minus-extension.fs
 require galope/c-to-str.fs
-require galope/tilde-tilde.fs  \ XXX TMP for debugging
+\ require galope/tilde-tilde.fs  \ XXX TMP for debugging
 
 \ ==============================================================
 \ Config
@@ -140,7 +141,6 @@ create sector-buffer  /sector allot
 : sector-data  ( -- )
   read-sector str>dsk  ;
 
-
 : /track  ( -- n )
   sectors/track /sector * /track-header +  ;
 
@@ -156,7 +156,7 @@ create sector-buffer  /sector allot
 : sector-header  ( track side sector -- )
   rot b>dsk            \ track
   swap b>dsk           \ side
-  1+ b>dsk             \ sector
+  1+ b>dsk             \ sector ID
   blocks/sector b>dsk  \ sector size
   0 b>dsk              \ FDC status register 1  \ XXX TODO
   0 b>dsk              \ FDC status register 2  \ XXX TODO
@@ -172,13 +172,13 @@ create sector-buffer  /sector allot
 
   1 b>dsk 2 b>dsk
     \ XXX TODO
-    \ the documentation says these bytes are unused,
+    \ the documentation reads these bytes are unused,
     \ but the DSK files created by mkp3fs use these values
 
   blocks/sector b>dsk   \ sector size
   sectors/track b>dsk   \ number of sectors
-  0 b>dsk               \ GAP# length  \ XXX TODO
-  0 b>dsk               \ filler byte  \ XXX TODO mkp3fs puts 0xE5
+  $52 b>dsk             \ GAP#3 length (value copied from mkp3fs)
+  $E5 b>dsk             \ filler byte (value copied from mkp3fs)
   ;
 
 : sector-headers  ( track side -- )
@@ -190,8 +190,7 @@ create sector-buffer  /sector allot
 : complete-track-header ( d -- )
   >output 2swap d-
   d>s 256 swap - nulls str>dsk  ;
-  \ Complete the track header with nulls
-  \ to make it 256-byte long.
+  \ Complete the track header with nulls to make it 256-byte long.
   \ d = output file position at the start of the track header
 
 : track-header  ( track side -- )
