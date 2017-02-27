@@ -1,6 +1,6 @@
 = fsb2 to-do list
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-03-20
+:revdate: 2017-01-09
 
 // This file is part of fsb2
 // http://programandala.net/en.program.fsb2.html
@@ -14,3 +14,8 @@ http://programandala.net/en.program.solo_forth.html[Solo Forth].  The
 error conditions are still unknown.
 
 2016-08-14: Extract the parameter checks that are common to all modules.
+
+2016-12-21: Add the name of the file to the "block too long" error message.
+
+2017-01-09: Add the text of the current line to the "block too long"
+error message.

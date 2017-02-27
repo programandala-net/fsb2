@@ -33,6 +33,8 @@ include ./fsb2_VERSION.fs
 \ Option to choose a suffix for the output file.
 \
 \ Substitute any Gforth-specific code with standard Forth.
+\
+\ Add the name of the file to the "block too long" error message.
 
 \ --------------------------------------------------------------
 \ Requirements
@@ -149,7 +151,7 @@ variable output-fid
   \ Print the contents of the given counter variable.
 
 : report  ( -- )
-  ." Input line: " input-line#   .counter
+  ." Input line: " input-line#  .counter
   ." Block:      " block#       .counter
   ." Block line: " block-line#  .counter  ;
   \ Print the counters.
@@ -285,7 +287,7 @@ defer print-line  ( ca len -- )
 
 : check-line-length  ( ca len -- )
   dup max-block-column > if    line-too-long.error
-                          else  2drop  then  ;
+                         else  2drop  then  ;
   \ Abort if the length of the given input line is too long.
 
 : (process-line)  ( ca len -- )
@@ -420,7 +422,7 @@ arg.debug-option arguments arg-add-option
 
 : lines-option  ( ca len --  )
   2dup s>number? 0= abort" Wrong lines argument"
-  s>d to lines/block  
+  s>d to lines/block
   s"  lines per block" s+ echo  ;
   \ Set the lines per block.
 
@@ -488,3 +490,5 @@ go bye
 \
 \ 2016-08-03: Change the version number to Semantic Versioning
 \ (http://semver.org) and move it to its own file <fsb2_VERSION.fs>.
+\
+\ 2016-12-21: Update to-do.

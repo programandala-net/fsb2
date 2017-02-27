@@ -23,7 +23,7 @@
 # file directly on the sectors, without file system, to be
 # directly accessed by a Forth system.  This is the format used
 # by the library disk of Solo Forth
-# (http://programanadala.net/en.program.solo_forth.html).
+# (http://programandala.net/en.program.solo_forth.html).
 
 # ##############################################################
 # Requirements
@@ -44,6 +44,7 @@
 # 2015-11-21: Typo.
 # 2016-05-02: Start implementing the size check.
 # 2016-05-03: Finish the size check.
+# 2016-08-03: Fix typo.
 
 # ##############################################################
 # Error checking
@@ -78,7 +79,7 @@ fi
 # ##############################################################
 # Main
 
-fsb2 $1
+fsb2 --verbose $1
 
 # Get the filenames:
 
