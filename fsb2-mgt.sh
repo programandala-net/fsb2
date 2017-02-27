@@ -5,16 +5,18 @@
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
 
-# ##############################################################
+# Last modified: 201702271853
+
+# ==============================================================
 # Author and license
 
-# Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
+# Copyright (C) 2015,2016,2017 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
 # redistributed copies and derived works. There is no warranty.
 
-# ##############################################################
+# ==============================================================
 # Description
 
 # This program converts a Forth source file from the FSB format
@@ -25,34 +27,44 @@
 # by the library disk of Solo Forth
 # (http://programandala.net/en.program.solo_forth.html).
 
-# ##############################################################
+# ==============================================================
 # Requirements
 
 # fsb2:
 #   <http://programandala.net/en.program.fsb2.html>
 
-# ##############################################################
+# ==============================================================
 # Usage (after installation)
 
-#   fsb2-mgt filename.fsb
+#   fsb2-mgt filename
 
-# ##############################################################
+# ==============================================================
 # History
 
 # 2015-10-10: Adapted from fsb
 # (http://programandala.net/en.program.fsb.html).
+#
 # 2015-11-21: Typo.
+#
 # 2016-05-02: Start implementing the size check.
+#
 # 2016-05-03: Finish the size check.
+#
 # 2016-08-03: Fix typo.
+#
+# 2017-02-27: Don't assume the extension of the source filename
+# is "fsb" anymore. Don't reuse it as secondary extension of the
+# blocks file. Update the messages.
 
-# ##############################################################
+# ==============================================================
 # Error checking
 
 if [ "$#" -ne 1 ] ; then
-  echo "Convert a Forth source file from .fsb to .mgt"
+  echo "Convert a Forth source file from FSB format"
+  echo "to a block disk in a MGT disk image."
+  echo
   echo 'Usage:'
-  echo "  ${0##*/} sourcefile.fsb"
+  echo "  ${0##*/} sourcefile"
   exit 1
 fi
 
@@ -76,7 +88,7 @@ if [ ! -s "$1"  ] ; then
   exit 1
 fi
 
-# ##############################################################
+# ==============================================================
 # Main
 
 fsb2 --verbose $1
@@ -84,7 +96,7 @@ fsb2 --verbose $1
 # Get the filenames:
 
 basefilename=${1%.*}
-blocksfile=$basefilename.fsb.fb
+blocksfile=$basefilename.fb
 mgtfile=$basefilename.mgt
 
 # Get the size of the file:
@@ -99,7 +111,8 @@ file_size=${du_size%%[^0-9]*}
 if [ $file_size -gt "800" ]
 then
   echo "Error:"
-  echo "The size of $blocksfile is $file_size KiB."
+  echo "The size of the intermediate blocks file $blocksfile"
+  echo "is $file_size KiB."
   echo "The maximum capacity of an MGT disk image is 800 KiB."
   exit 64
 fi

@@ -17,10 +17,9 @@
 
 == Description
 
-fsb2 is a preprocessor and converter of Forth source files.
-Its goal is to make it easy to edit and
-maintain Forth source files, in ordinary text format, for Forth
-systems that use blocks.
+fsb2 is a preprocessor and converter of Forth source files.  Its
+goal is to make it easy to edit and maintain Forth source files,
+in ordinary text format, for Forth systems that use blocks.
 
 Following some simple layout conventions, the source file can be
 edited without the lack of space imposed by blocks, thus making

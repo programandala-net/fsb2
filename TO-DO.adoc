@@ -8,6 +8,8 @@
 // This file is written in AsciiDoc/Asciidoctor format.
 // See <http://asciidoctor.org>.
 
+// Last modified: 201702271349
+
 2016-03-20: Sometimes slash comments are ignored on the left margin.
 This has been detected during the development of
 http://programandala.net/en.program.solo_forth.html[Solo Forth].  The
@@ -21,3 +23,5 @@ error conditions are still unknown.
 error message.
 
 2017-02-27: Improve documentation of parameters.
+
+2017-02-27: Add a Vim file with the mappings used by fsb to check the source.

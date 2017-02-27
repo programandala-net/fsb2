@@ -5,16 +5,18 @@
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
 
-# ##############################################################
+# Last modified: 201702272004
+
+# ===============================================================
 # Author and license
 
-# Copyright (C) 2016 Marcos Cruz (programandala.net)
+# Copyright (C) 2016,2017 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
 # redistributed copies and derived works. There is no warranty.
 
-# ##############################################################
+# ===============================================================
 # Description
 
 # This program converts a Forth source file from the FSB format to a
@@ -27,18 +29,18 @@
 # XXX TODO -- Add track 0 (16 sectors, 4 KiB) at the start, created by
 # <make_trd_track_0.fs>, which is part of Solo Forth.
 
-# ##############################################################
+# ===============================================================
 # Requirements
 
 # fsb2:
 #   <http://programandala.net/en.program.fsb2.html>
 
-# ##############################################################
-# Usage
+# ===============================================================
+# Usage (after installation)
 
-#   fsb2-trd.sh filename.fsb [disk_label]
+#   fsb2-trd filename [disk_label]
 
-# ##############################################################
+# ===============================================================
 # History
 
 # 2016-08-03: Start. Adapt from fsb2-mgt.sh.
@@ -48,14 +50,19 @@
 # (http://programandala.net/en.program.solo_forth.html). Without
 # sector 0, which contains the disk metadata, the disk image is not
 # recognized by the emulator and can not be mounted.
+#
+# 2017-02-27: Don't assume the extension of the source filename
+# is "fsb" anymore. Don't reuse it as secondary extension of the
+# blocks file. Update the messages.
 
-# ##############################################################
+# ===============================================================
 # Error checking
 
 if [[ "$#" -ne 1 && "$#" -ne 2 ]] ; then
-  echo "Convert a Forth source file from .fsb to .trd"
+  echo "Convert a Forth source file from FSB format"
+  echo "to a block disk in a TRD disk image."
   echo 'Usage:'
-  echo "  ${0##*/} sourcefile.fsb [disk_label]"
+  echo "  ${0##*/} sourcefile [disk_label]"
   exit 1
 fi
 
@@ -79,7 +86,7 @@ if [ ! -s "$1"  ] ; then
   exit 1
 fi
 
-# ##############################################################
+# ===============================================================
 # Main
 
 # Get the first 8 characters of the disk label, padded with spaces:
@@ -91,7 +98,7 @@ fsb2 $1
 
 # Filenames:
 basefilename=${1%.*}
-blocksfile=$basefilename.fsb.fb
+blocksfile=$basefilename.fb
 trdfile=$basefilename.trd
 track0file="/tmp/fsb2-trd.track_0.bin"
 tracks1to79file="/tmp/fsb2-trd.tracks_1-79.bin"

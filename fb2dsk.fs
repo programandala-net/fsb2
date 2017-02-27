@@ -5,14 +5,12 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version ( -- ca len ) s" 1.0.1+201702271344" ;
-
-\ Last modified: 201608141215
+: fb2dsk-version ( -- ca len ) s" 1.1.0+201702272027" ;
 
 \ ==============================================================
 \ Author and license
 
-\ Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
+\ Copyright (C) 2015,2016,2017 Marcos Cruz (programandala.net)
 
 \ You may do whatever you want with this work, so long as you
 \ retain the copyright notice(s) and this license in all
@@ -36,7 +34,9 @@
 \ 2016-08-14: Start integrating the code into fsb2.
 \
 \ 2017-02-27: Change the code style (no mandatory double spaces around
-\ comments or before semicolon anymore).
+\ comments or before semicolon anymore).  Don't assume the extension
+\ of the source filename is "fb"; update and improve the messages.
+\ Factor `run`.
 
 \ ==============================================================
 \ To-do
@@ -153,8 +153,7 @@ create sector-buffer  /sector allot
   tracks b>dsk                  \ numbers of tracks
   sides b>dsk                   \ number of sides
   /track w>dsk                  \ size of a track
-  204 nulls str>dsk             \ unused
-  ;
+  204 nulls str>dsk ;           \ unused
 
 : sector-header ( track side sector -- )
   rot b>dsk            \ track
@@ -163,8 +162,7 @@ create sector-buffer  /sector allot
   blocks/sector b>dsk  \ sector size
   0 b>dsk              \ FDC status register 1  \ XXX TODO
   0 b>dsk              \ FDC status register 2  \ XXX TODO
-  0 w>dsk              \ unused
-  ;
+  0 w>dsk ;            \ unused
 
 : (track-header) ( track side -- )
   s\" Track-Info\r\n" str>dsk
@@ -181,8 +179,7 @@ create sector-buffer  /sector allot
   blocks/sector b>dsk   \ sector size
   sectors/track b>dsk   \ number of sectors
   $52 b>dsk             \ GAP#3 length (value copied from mkp3fs)
-  $E5 b>dsk             \ filler byte (value copied from mkp3fs)
-  ;
+  $E5 b>dsk ;           \ filler byte (value copied from mkp3fs)
 
 : sector-headers ( track side -- )
   sectors/track 0 ?do  2dup i sector-header  loop  2drop ;
@@ -226,21 +223,22 @@ create sector-buffer  /sector allot
   ." Version " fb2dsk-version type cr
   ." This program is part of fsb2" cr
   ." http://programandala.net/en.program.fsb2.html" cr cr
-  ." Copyright (C) 2015,2106 Marcos Cruz (programandala.net)" cr cr
-  ." Usage (depending on the installation method):" cr
-  ."   fb2dsk[.fs] input_file.fb" cr
+  ." Copyright (C) 2015,2106,2017 Marcos Cruz (programandala.net)" cr cr
+  ." Usage:" cr
+  ."   fb2dsk input_file [ input_file ... ] " cr
   ." Any number of input files is accepted." cr
-  ." Output file names will be the input file names" cr
-  ." but with the '.dsk' extension instead of '.fb'." cr ;
+  ." Output filenames will be the input filenames" cr
+  ." but with the '.dsk' extension instead of the original one." cr ;
 
 : input-files ( -- n )
   argc @ 1- ;
   \ Number of input files in the command line.
 
+: (run) ( n -- )
+  0 do i 1+ arg fb>dsk loop ;
+
 : run ( -- )
-  input-files ?dup
-  if    0 do  i 1+ arg fb>dsk  loop
-  else  about  then ;
+  input-files ?dup if (run) else about then ;
 
 run bye
 

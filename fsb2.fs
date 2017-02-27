@@ -4,9 +4,11 @@
 \ A Forth source converter.
 \ http://programandala.net/en.program.fsb2.html
 
+\ Last modified: 201702272035
+
 include ./fsb2_VERSION.fs
 
-\ --------------------------------------------------------------
+\ ==============================================================
 \ Author and license
 
 \ Copyright (C) 2015,2016,2017 Marcos Cruz (programandala.net)
@@ -15,28 +17,26 @@ include ./fsb2_VERSION.fs
 \ the copyright notice(s) and this license in all redistributed copies
 \ and derived works. There is no warranty.
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Description
 
 \ See <README.adoc>.
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ History
 
 \ See at the end of the file.
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ To-do
 
-\ Remove the suffix of the input file.
-\
 \ Option to choose a suffix for the output file.
 \
 \ Substitute any Gforth-specific code with standard Forth.
 \
 \ Add the name of the file to the "block too long" error message.
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Requirements
 
  only forth definitions  decimal  warnings off
@@ -79,7 +79,26 @@ constant /counted-string
   \ Return the last name _ca2 len2_ (a substring separated by spaces)
   \ of string _ca1 len1_.
 
-\ --------------------------------------------------------------
+: -bounds  ( ca1 len -- ca2 ca1 )
+  2dup + 1- nip ; \ This works with '-1 +loop'
+  \ Convert an address and length to the parameters needed by a
+  \ "do ... -1 +loop" in order to examine that memory zone in
+  \ reverse order.
+  \
+  \ XXX Note: "do ... 1 -loop" does not work the same way in Gforth
+  \ and can not be used with this '-bounds'.
+  \
+  \ over 1- >r + 1- r> swap ; \ This variant works with '1 -loop'
+
+: -extension  ( ca1 len1 -- ca1 len1' | ca1 len1 )
+  2dup -bounds 1+ 2swap  \ default raw return values
+  -bounds ?do
+    i c@ '.' = if  drop i  leave  then
+  -1 +loop  ( ca1 ca1' )  \ final raw return values
+  over - ;
+  \ Remove the file extension from a filename.
+
+\ ===============================================================
 \ Variables
 
 variable verbose      \ flag: verbose mode? \ XXX not used yet
@@ -92,16 +111,16 @@ variable block-line#          \ current block line (0..15)
 
 variable options      \ counter: valid options on the command line
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Configuration
 
-16 value lines/block
-64 value columns/line
+l/s value lines/block
+c/l value columns/line
 
 : max-block-line ( -- n ) lines/block 1- ;
 : max-block-column ( -- n ) columns/line 1- ;
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Files
 
 variable input-fid
@@ -134,16 +153,16 @@ variable output-fid
   -input -output ;
   \ Close both the input and output files.
 
-: output-suffix ( -- ca len )
-  fbs-format @ if  s" .fbs"  else  s" .fb"  then ;
+: output-extension ( -- ca len )
+  fbs-format @ if s" .fbs" else s" .fb" then ;
   \ Return the filename suffix for the current output format.
 
 : >output-filename ( ca1 len1 -- ca2 len2 )
-  output-suffix s+ ;
+  -extension output-extension s+ ;
   \ Convert the input filename _ca1 len1_
   \ to the output filename _ca2 len2_.
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Errors
 
 : .counter ( a -- )
@@ -166,25 +185,25 @@ variable output-fid
 : block-too-long.error ( -- )
   s" Block too long." error ;
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Converter
 
 : echo ( ca len -- )
-  verbose @ if  type cr  else  2drop  then ;
+  verbose @ if type cr else 2drop then ;
   \ Echo the given string, if verbose mode is on.
 
 : indented? ( ca len -- f )
-  if  c@ bl =  else  drop false  then ;
+  if c@ bl = else drop false then ;
   \ Is the given input line indented?
 
 : metacomment? ( ca len -- f )
-  2dup indented? if     first-name s" \" str=
-                 else   2drop false  then ;
+  2dup indented? if   first-name s" \" str=
+                 else 2drop false then ;
   \ Is the given input line a metacomment?
 
 : actual-line? ( ca len -- f )
-  2dup trim nip if    metacomment? 0=
-                else  2drop false  then ;
+  2dup trim nip if   metacomment? 0=
+                else 2drop false then ;
   \ Is the given input line an actual code line
   \ (a non-empty line that is not a metacomment)?
 
@@ -212,13 +231,13 @@ variable output-fid
   \ Does the given string ends with a trailing slash?
 
 : slash-block-marker? ( ca len -- f )
-  2dup starting-slash? if    ending-slash?
-                       else  2drop false  then ;
+  2dup starting-slash? if   ending-slash?
+                       else 2drop false then ;
   \ Is the given input line a block header with slash marker?
 
 : block-header? ( ca len -- f )
-  2dup indented?            if  2drop  false exit  then
-  2dup slash-block-marker?  if  2drop   true exit  then
+  2dup indented?           if 2drop false exit then
+  2dup slash-block-marker? if 2drop  true exit then
        paren-block-marker? ;
   \ Is the given input line a block header?
 
@@ -243,7 +262,7 @@ defer print-line ( ca len -- )
   \ Print the given input line.
 
 : line>output ( ca len -- )
-  padded >output  fbs-format @ if  eol$ >output  then ;
+  padded >output fbs-format @ if eol$ >output then ;
   \ Print the given input line to the output file.
 
 ' line>output is print-line
@@ -259,7 +278,7 @@ defer print-line ( ca len -- )
   block-line# @ 1 max-block-line between ;
 
 : (complete-block) ( -- )
-  lines/block block-line# @ - 0 ?do  empty-line new-line  loop ;
+  lines/block block-line# @ - 0 ?do empty-line new-line loop ;
   \ Complete the current block with empty lines.
 
 : complete-block ( -- )
@@ -286,21 +305,21 @@ defer print-line ( ca len -- )
   \ Check the current block length.
 
 : check-line-length ( ca len -- )
-  dup max-block-column > if    line-too-long.error
-                         else  2drop  then ;
+  dup max-block-column > if   line-too-long.error
+                         else 2drop  then ;
   \ Abort if the length of the given input line is too long.
 
 : (process-line) ( ca len -- )
   1 actual-input-line# +!
   2dup check-line-length
-  2dup block-header? if    new-block
-                     else  check-block-length
-                     then  new-line ;
+  2dup block-header? if   new-block
+                     else check-block-length
+                     then new-line ;
   \ Process an actual input line.
 
 : process-line ( ca len -- )
   1 input-line# +!
-  2dup actual-line? if  (process-line)  else  2drop  then ;
+  2dup actual-line? if (process-line) else 2drop then ;
   \ Process an input line.
 
 create line-buffer /counted-string chars allot
@@ -316,7 +335,7 @@ create line-buffer /counted-string chars allot
   init-converter  begin  get-line  while  process-line  repeat
   complete-block ;
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Argument parser
 
 \ Create a new argument parser:
@@ -418,7 +437,7 @@ arg.debug-option arguments arg-add-option
   2dup s>number? 0= abort" Wrong columns argument"
   s>d to columns/line
   s"  columns per line" s+ echo ;
-  \ Set the colums per line.
+  \ Set the columns per line.
 
 : lines-option ( ca len --  )
   2dup s>number? 0= abort" Wrong lines argument"
@@ -438,22 +457,22 @@ arg.debug-option arguments arg-add-option
 : option ( n -- )
   1 options +!
   case
-    arg.help-option       of  help              endof
-    arg.version-option    of  version-option    endof
-    arg.verbose-option    of  verbose-option    endof
-    arg.fb-option         of  fb-option         endof
-    arg.fbs-option        of  fbs-option        endof
-    arg.columns-option    of  columns-option    endof
-    arg.lines-option      of  lines-option      endof
-    arg.debug-option      of  debug-option      endof
-    arg.non-option        of  input-file        endof
+    arg.help-option    of  help           endof
+    arg.version-option of  version-option endof
+    arg.verbose-option of  verbose-option endof
+    arg.fb-option      of  fb-option      endof
+    arg.fbs-option     of  fbs-option     endof
+    arg.columns-option of  columns-option endof
+    arg.lines-option   of  lines-option   endof
+    arg.debug-option   of  debug-option   endof
+    arg.non-option     of  input-file     endof
   endcase ;
 
 : option? ( -- n f )
   arguments arg-parse  dup arg.done <> over arg.error <> and ;
   \ Parse the next option. Is it right?
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ Boot
 
 : init ( -- )
@@ -461,11 +480,11 @@ arg.debug-option arguments arg-add-option
   verbose off  fbs-format off  options off ;
 
 : go ( -- )
-  init  begin  option?  while  option  repeat  drop  aid ;
+  init begin option? while option repeat drop aid ;
 
 go bye
 
-\ --------------------------------------------------------------
+\ ===============================================================
 \ History
 
 \ 2015-10-07: Start.
@@ -494,4 +513,6 @@ go bye
 \ 2016-12-21: Update to-do.
 \
 \ 2017-02-27: Change the code style (no mandatory double spaces around
-\ comments or before semicolon anymore).
+\ comments or before semicolon anymore).  Remove the filename
+\ extension of the input file, don't keep it as secondary extension of
+\ the output file.

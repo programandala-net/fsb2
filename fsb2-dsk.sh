@@ -5,51 +5,55 @@
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
 
-# ##############################################################
+# Last modified: 201702272004
+
+# ===============================================================
 # Author and license
 
-# Copyright (C) 2016 Marcos Cruz (programandala.net)
+# Copyright (C) 2016,2017 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
 # redistributed copies and derived works. There is no warranty.
 
-# ##############################################################
+# ===============================================================
 # Description
 
 # This program converts a Forth source file from the FSB format to a
-# ZX Spectrum phony DSK disk image (suitable for TR-DOS), The disk
+# ZX Spectrum phony DSK disk image (suitable for +3DOS), The disk
 # image will contain the source file directly on the sectors, without
 # file system, to be directly accessed by a Forth system.  This is the
 # format used by the library disk of Solo Forth
 # (http://programandala.net/en.program.solo_forth.html).
-#
-# XXX TODO -- Add track 0 (16 sectors, 4 KiB) at the start, created by
-# <make_trd_track_0.fs>, which is part of Solo Forth.
 
-# ##############################################################
+# ===============================================================
 # Requirements
 
 # fsb2:
 #   <http://programandala.net/en.program.fsb2.html>
 
-# ##############################################################
-# Usage
+# ===============================================================
+# Usage (after installation)
 
-#   fsb2-dsk.sh filename.fsb
+#   fsb2-dsk filename
 
-# ##############################################################
+# ===============================================================
 # History
 
 # 2016-08-14: Start.
+#
+# 2017-02-27: Don't assume the extension of the source filename
+# is "fsb" anymore. Don't reuse it as secondary extension of the
+# blocks file. Update the messages.
 
-# ##############################################################
+# ===============================================================
 # Error checking
 
 if [[ "$#" -ne 1 && "$#" -ne 2 ]] ; then
-  echo "Convert a Forth source file from .fsb to .dsk"
+  echo "Convert a Forth source file from FSB format"
+  echo "to a block disk in a DSK disk image."
   echo 'Usage:'
-  echo "  ${0##*/} sourcefile.fsb"
+  echo "  ${0##*/} sourcefile"
   exit 1
 fi
 
@@ -73,7 +77,7 @@ if [ ! -s "$1"  ] ; then
   exit 1
 fi
 
-# ##############################################################
+# ===============================================================
 # Main
 
 # Convert the .fsb file to .fb:
@@ -82,7 +86,6 @@ fsb2 $1
 # Filenames:
 basefilename=${1%.*}
 blocksfile=$basefilename.fb
-mv $basefilename.fsb.fb $blocksfile
 
 # Get the size of the file:
 du_size=$(du -sk $blocksfile)
@@ -104,7 +107,7 @@ fi
 # Create the disk image:
 fb2dsk $blocksfile
 
-# Remove the temporary files:
+# Remove the temporary file:
 rm -f $blocksfile
 
 # vim:tw=64:ts=2:sts=2:et:
