@@ -1,12 +1,12 @@
 = fsb2
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-11-16
+:revdate: 2017-02-27
 :linkattrs:
 
 // This file is part of fsb2
 // http://programandala.net/en.program.fsb2.html
 
-// Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
+// Copyright (C) 2015,2016,2017 Marcos Cruz (programandala.net)
 //
 // You may do whatever you want with this work, so long as you
 // retain the copyright notice(s) and this license in all
@@ -17,10 +17,10 @@
 
 == Description
 
-fsb2 is a preprocessor and converter of Forth source files,
-written in Forth.  Its goal is to make it easy to edit and
+fsb2 is a preprocessor and converter of Forth source files.
+Its goal is to make it easy to edit and
 maintain Forth source files, in ordinary text format, for Forth
-systems that use blocks files.
+systems that use blocks.
 
 Following some simple layout conventions, the source file can be
 edited without the lack of space imposed by blocks, thus making
@@ -48,12 +48,13 @@ But there are some differences:
   backslash-format block header.
 - fsb removes the source filename extension from the target
   filename.
+- fsb doesn't support TRD disk images as target format.
 
 fsb and fsb2 can be installed at the same time.
 
 == Requirements
 
-fsb2 has been written for Gforth and tested only with Gforth.
+fsb2 is written in Forth for Gforth.
 Probably the changes required to run on any other standard Forth
 system are very simple. This task is on the to-do list.
 
