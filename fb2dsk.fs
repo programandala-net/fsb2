@@ -5,7 +5,7 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version ( -- ca len ) s" 1.1.0+201702272027" ;
+: fb2dsk-version ( -- ca len ) s" 1.2.0+201703021352" ;
 
 \ ==============================================================
 \ Author and license
@@ -56,21 +56,94 @@ require galope/c-to-str.fs
 \ ==============================================================
 \ Config
 
-  2 value sides
- 80 value tracks
-  9 value sectors/track
-  2 value blocks/sector  \ 256-byte blocks per sector
-  \ disk geometry
+0
+  cfield: ~disk-type
+    \ Byte 0: Disk type
+    \   0 = Standard PCW range DD SS ST (and +3)
+    \   1 = Standard CPC range DD SS ST system format
+    \   2 = Standard CPC range DD SS ST data only format
+    \   3 = Standard PCW range DD DS DT
+    \   All other values reserved
+  cfield: ~disk-geometry
+    \ Byte 1: Disk geometry
+    \   Bits 0..1 Sidedness
+    \     0 = Single sided
+    \     1 = Double sided (alternating sides)
+    \     2 = Double sided (successive sides)
+    \   Bits 2...6 Reserved (set to 0)
+    \   Bit 7 Double track
+  cfield: ~tracks
+    \ Byte 2: Number of tracks per side
+  cfield: ~sectors/track
+    \ Byte 3: Number of sectors per track
+  cfield: ~blocks/sector
+    \ Byte 4: Log2(sector size) - 7
+  cfield: ~reserved-tracks
+    \ Byte 5: Number of reserved tracks
+  cfield: ~sectors/block
+    \ Byte 6: Log2(block size / 128)
+  cfield: ~directory-blocks
+    \ Byte 7: Number of directory blocks
+  cfield: ~gap-length-R/W
+    \ Byte 8: Gap length (read/write)
+  cfield: ~gap-length-format
+    \ Byte 9: Gap length (format)
+constant /disk-specification
+
+create 180k-disk-specification ( -- a )
+  $00 c, \ Disc type
+  $00 c, \ Disc geometry
+  $28 c, \ Tracks
+  $09 c, \ Sectors
+  $02 c, \ Blocks per sector (sector size)
+  $01 c, \ Reserved tracks
+  $03 c, \ ?Sectors per block
+  $02 c, \ ?Directory blocks
+  $2A c, \ Gap length (R/W)
+  $52 c, \ Gap length (format)
+
+create 720k-disk-specification ( -- a )
+  $03 c, \ Disc type
+  $81 c, \ Disc geometry
+  $50 c, \ Tracks
+  $09 c, \ Sectors
+  $02 c, \ Blocks per sector (sector size)
+  $02 c, \ Reserved tracks
+  $04 c, \ ?Sectors per block
+  $04 c, \ ?Directory blocks
+  $2A c, \ Gap length (R/W)
+  $52 c, \ Gap length (format)
+
+720k-disk-specification value disk-specification
+
+: disk-type ( -- n )
+  disk-specification ~disk-type c@ ;
+
+: disk-geometry ( -- n )
+  disk-specification ~disk-geometry c@ ;
+
+: tracks ( -- n )
+  disk-specification ~tracks c@ ;
+
+: sectors/track ( -- n )
+  disk-specification ~sectors/track c@ ;
+
+: blocks/sector ( -- n )
+  disk-specification ~blocks/sector c@ ;
 
 : /sector ( -- n )
   256 blocks/sector * ;
   \ bytes per sector
 
+: sides ( -- n )
+  \ disk-type 3 = abs 1+ ;
+  disk-geometry %111 0> abs 1+ ;
+
 : 180k ( -- )
-  1 to sides  40 to tracks ;
+  180k-disk-specification to disk-specification ;
 
 : 720k ( -- )
-  2 to sides  80 to tracks ;
+  720k-disk-specification to disk-specification ;
 
 256 constant /track-header    \ bytes
   8 constant /sector-header   \ bytes
@@ -182,7 +255,7 @@ create sector-buffer  /sector allot
   $E5 b>dsk ;           \ filler byte (value copied from mkp3fs)
 
 : sector-headers ( track side -- )
-  sectors/track 0 ?do  2dup i sector-header  loop  2drop ;
+  sectors/track 0 ?do 2dup i sector-header loop 2drop ;
 
 : >output ( -- d )
   output-fid file-position throw ;
@@ -200,13 +273,13 @@ create sector-buffer  /sector allot
 
 : (track) ( track side -- )
   track-header
-  sectors/track 0 ?do  sector-data  loop ;
+  sectors/track 0 ?do sector-data loop ;
 
 : track ( track -- )
-  sides 0 ?do  dup i (track)  loop  drop ;
+  sides 0 ?do  dup i (track) loop drop ;
 
 : dsk ( -- )
-  disk-header  tracks 0 ?do  i track  loop ;
+  disk-header tracks 0 ?do i track loop ;
 
 : fb>dsk ( ca len -- )
   2dup ." Converting " type cr  \ XXX TMP
