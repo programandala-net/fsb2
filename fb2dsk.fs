@@ -5,7 +5,7 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version ( -- ca len ) s" 1.2.0+201703021352" ;
+: fb2dsk-version ( -- ca len ) s" 1.3.0+201703021555" ;
 
 \ ==============================================================
 \ Author and license
@@ -37,6 +37,9 @@
 \ comments or before semicolon anymore).  Don't assume the extension
 \ of the source filename is "fb"; update and improve the messages.
 \ Factor `run`.
+\
+\ 2017-03-02: Use a structure to hold the disk specifications.
+\ Add the disk specification to sector 0 of track 0.
 
 \ ==============================================================
 \ To-do
@@ -137,13 +140,15 @@ create 720k-disk-specification ( -- a )
 
 : sides ( -- n )
   \ disk-type 3 = abs 1+ ;
-  disk-geometry %111 0> abs 1+ ;
+  disk-geometry %111 and 0> abs 1+ ;
 
 : 180k ( -- )
   180k-disk-specification to disk-specification ;
+  \ XXX TODO -- Not used.
 
 : 720k ( -- )
   720k-disk-specification to disk-specification ;
+  \ XXX TODO -- Not used.
 
 256 constant /track-header    \ bytes
   8 constant /sector-header   \ bytes
@@ -159,12 +164,12 @@ create sector-buffer  /sector allot
   \ file identifiers
 
 : open-input-file ( ca len -- )
-  2dup ." Converting " type cr  \ XXX TMP
+  \ 2dup ." Converting " type cr  \ XXX TMP
   r/o open-file throw  to input-fid ;
   \ Open the input file _ca len_.
 
 : create-output-file ( ca len -- )
-  2dup ." Creating " type cr  \ XXX TMP
+  \ 2dup ." Creating " type cr  \ XXX TMP
   w/o create-file throw  to output-fid ;
   \ Create the output file _ca len_.
 
@@ -212,7 +217,11 @@ create sector-buffer  /sector allot
 
 : nulls ( len -- ca len )
   empty-sector-buffer sector-buffer swap ;
-  \ return a string _ca len_ filled with zeros.
+  \ Return a string _ca len_ filled with zeros.
+  \ _len_ is not greater than the sector size.
+
+: nulls>dsk ( len -- )
+  nulls str>dsk ;
 
 : sector-data ( -- )
   read-sector str>dsk ;
@@ -226,7 +235,7 @@ create sector-buffer  /sector allot
   tracks b>dsk                  \ numbers of tracks
   sides b>dsk                   \ number of sides
   /track w>dsk                  \ size of a track
-  204 nulls str>dsk ;           \ unused
+  204 nulls>dsk ;               \ unused
 
 : sector-header ( track side sector -- )
   rot b>dsk            \ track
@@ -262,7 +271,7 @@ create sector-buffer  /sector allot
 
 : complete-track-header ( d -- )
   >output 2swap d-
-  d>s 256 swap - nulls str>dsk ;
+  d>s 256 swap - nulls>dsk ;
   \ Complete the track header with nulls to make it 256-byte long.
   \ d = output file position at the start of the track header
 
@@ -271,18 +280,29 @@ create sector-buffer  /sector allot
   2dup (track-header) sector-headers
   2r> complete-track-header ;
 
-: (track) ( track side -- )
-  track-header
-  sectors/track 0 ?do sector-data loop ;
+: sectors>dsk ( -- )
+  0 ?do sector-data loop ;
+
+: (side0-track0) ( -- )
+  disk-specification /disk-specification str>dsk
+  /sector /disk-specification - nulls>dsk
+  sectors/track 1- sectors>dsk ;
+
+: (side-track) ( -- )
+  sectors/track sectors>dsk ;
+
+: side-track ( track side -- )
+  2dup track-header
+       + if (side-track) else (side0-track0) then ;
 
 : track ( track -- )
-  sides 0 ?do  dup i (track) loop drop ;
+  sides 0 ?do dup i side-track loop drop ;
 
 : dsk ( -- )
   disk-header tracks 0 ?do i track loop ;
 
 : fb>dsk ( ca len -- )
-  2dup ." Converting " type cr  \ XXX TMP
+  \ 2dup ." Converting " type cr  \ XXX TMP
   open-files dsk close-files ;
   \ Convert the file whose name is _ca len_ to a DSK disk image.
 
