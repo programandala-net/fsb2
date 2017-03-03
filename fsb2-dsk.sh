@@ -5,7 +5,7 @@
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
 
-# Last modified: 201702272004
+# Last modified: 201703032321
 
 # ===============================================================
 # Author and license
@@ -45,6 +45,8 @@
 # 2017-02-27: Don't assume the extension of the source filename
 # is "fsb" anymore. Don't reuse it as secondary extension of the
 # blocks file. Update the messages.
+#
+# 2017-03-03: Update the error message about maximum capacitiy.
 
 # ===============================================================
 # Error checking
@@ -96,11 +98,12 @@ file_size=${du_size%%[^0-9]*}
 #echo "File size=($file_size)"
 #echo "$blocksfile is $file_size Kib"
 
-if [ $file_size -gt "720" ]
+if [ $file_size -gt "719" ]
 then
   echo "Error:"
   echo "The size of $blocksfile is $file_size KiB."
-  echo "The maximum capacity of a DSK disk image is 720 KiB."
+  echo "The maximum capacity usable for blocks on a DSK disk image"
+  echo "is 719 KiB (720 KiB minus the first two sectors)."
   exit 64
 fi
 

@@ -5,7 +5,7 @@
 # This file is part of fsb2
 # http://programandala.net/en.program.fsb2.html
 
-# Last modified: 201702272004
+# Last modified: 201703031610
 
 # ===============================================================
 # Author and license
@@ -54,6 +54,8 @@
 # 2017-02-27: Don't assume the extension of the source filename
 # is "fsb" anymore. Don't reuse it as secondary extension of the
 # blocks file. Update the messages.
+#
+# 2017-03-03: Improve the error message about maximum capacity.
 
 # ===============================================================
 # Error checking
@@ -116,7 +118,8 @@ if [ $file_size -gt "636" ]
 then
   echo "Error:"
   echo "The size of $blocksfile is $file_size KiB."
-  echo "The maximum capacity of a formated TRD disk image is 636 KiB."
+  echo "The maximum capacity usable for blocks on a TRD disk image"
+  echo "is 636 KiB (640 KiB minus the first track)."
   exit 64
 fi
 
