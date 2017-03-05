@@ -5,7 +5,7 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version ( -- ca len ) s" 1.3.0+201703021555" ;
+: fb2dsk-version ( -- ca len ) s" 1.4.0+201703052253" ;
 
 \ ==============================================================
 \ Author and license
@@ -40,6 +40,9 @@
 \
 \ 2017-03-02: Use a structure to hold the disk specifications.
 \ Add the disk specification to sector 0 of track 0.
+\
+\ 2017-03-05: Trailing empty blocks are filled with blanks, not with
+\ zeroes.
 
 \ ==============================================================
 \ To-do
@@ -201,14 +204,14 @@ create sector-buffer  /sector allot
   \ (little endian, low byte followed by high byte).
 
 : empty-sector-buffer ( -- )
-  sector-buffer /sector erase ;
+  sector-buffer /sector blank ;
 
 : read-sector ( -- ca len )
   empty-sector-buffer
   sector-buffer dup /sector input-fid read-file throw
   /sector max ;
   \ Read a sector-size data chunk from the input file.  If the
-  \ input file is empty, return a string of zeroes instead.
+  \ input file is empty, return a string of blanks instead.
   \ This way the disk image will be completed, no matter the
   \ size of the input file.
 
