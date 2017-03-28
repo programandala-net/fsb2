@@ -5,7 +5,7 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version ( -- ca len ) s" 1.4.0+201703052253" ;
+: fb2dsk-version ( -- ca len ) s" 1.4.0+201703281616" ;
 
 \ ==============================================================
 \ Author and license
@@ -283,7 +283,7 @@ create sector-buffer  /sector allot
   2dup (track-header) sector-headers
   2r> complete-track-header ;
 
-: sectors>dsk ( -- )
+: sectors>dsk ( n -- )
   0 ?do sector-data loop ;
 
 : (side0-track0) ( -- )
