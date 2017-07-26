@@ -4,7 +4,8 @@
 \ A Forth source converter.
 \ http://programandala.net/en.program.fsb2.html
 
-\ Last modified: 201702272035
+\ Last modified: 201707261648
+\ See change log at the end of the file
 
 include ./fsb2_VERSION.fs
 
@@ -23,11 +24,6 @@ include ./fsb2_VERSION.fs
 \ See <README.adoc>.
 
 \ ===============================================================
-\ History
-
-\ See at the end of the file.
-
-\ ===============================================================
 \ To-do
 
 \ Option to choose a suffix for the output file.
@@ -41,13 +37,15 @@ include ./fsb2_VERSION.fs
 
  only forth definitions  decimal  warnings off
 
+\ ----------------------------------------------
 \ From Forth Foundation Library
-\ (http://irdvo.github.io/ffl/):
+\ (http://irdvo.github.io/ffl/)
 
 include ffl/arg.fs \ argument parser
 
+\ ----------------------------------------------
 \ From Galope
-\ (http://programandala.net/en.program.galope.html):
+\ (http://programandala.net/en.program.galope.html)
 
 s" /COUNTED-STRING" environment? 0= [if]  255  [then]
 constant /counted-string
@@ -97,6 +95,15 @@ constant /counted-string
   -1 +loop  ( ca1 ca1' )  \ final raw return values
   over - ;
   \ Remove the file extension from a filename.
+
+: s+ {: ca1 len1 ca2 len2 -- ca3 len3 :}
+  len1 len2 + allocate throw {: ca3 :}
+  ca1 ca3 len1 move
+  ca2 ca3 len1 + len2 move
+  ca3 len1 len2 + ;
+  \ Create a new string _ca3 len3_ in the heap, containing the
+  \ concatenation of string _ca1 len1_ (first) and string _ca2 len2_
+  \ (second).
 
 \ ===============================================================
 \ Variables
@@ -485,7 +492,7 @@ arg.debug-option arguments arg-add-option
 go bye
 
 \ ===============================================================
-\ History
+\ Change log
 
 \ 2015-10-07: Start.
 \
@@ -516,3 +523,6 @@ go bye
 \ comments or before semicolon anymore).  Remove the filename
 \ extension of the input file, don't keep it as secondary extension of
 \ the output file.
+\
+\ 2017-07-26: Add `s+`, which was included in Gforth 0.7.3 but removed
+\ from Gforth 0.7.9.

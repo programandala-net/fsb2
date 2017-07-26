@@ -5,7 +5,8 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-: fb2dsk-version ( -- ca len ) s" 1.4.0+201703281616" ;
+: fb2dsk-version s" 1.5.0+201707261653" ;
+\ See change log at the end of the file
 
 \ ==============================================================
 \ Author and license
@@ -24,27 +25,6 @@
 \ image.
 
 \ ==============================================================
-\ History
-
-\ 2015-11-08: Start.
-\
-\ 2015-11-09: First working version: a 482 KiB input file is converted
-\ to a 778496 B DSK image.
-\
-\ 2016-08-14: Start integrating the code into fsb2.
-\
-\ 2017-02-27: Change the code style (no mandatory double spaces around
-\ comments or before semicolon anymore).  Don't assume the extension
-\ of the source filename is "fb"; update and improve the messages.
-\ Factor `run`.
-\
-\ 2017-03-02: Use a structure to hold the disk specifications.
-\ Add the disk specification to sector 0 of track 0.
-\
-\ 2017-03-05: Trailing empty blocks are filled with blanks, not with
-\ zeroes.
-
-\ ==============================================================
 \ To-do
 
 \ Make the format configurable: 180 or 720 KiB.
@@ -57,6 +37,7 @@
 
 require galope/minus-extension.fs
 require galope/c-to-str.fs
+require galope/s-plus.fs
 \ require galope/tilde-tilde.fs  \ XXX TMP for debugging
 
 \ ==============================================================
@@ -337,5 +318,29 @@ create sector-buffer  /sector allot
   input-files ?dup if (run) else about then ;
 
 run bye
+
+\ ==============================================================
+\ Change log
+
+\ 2015-11-08: Start.
+\
+\ 2015-11-09: First working version: a 482 KiB input file is converted
+\ to a 778496 B DSK image.
+\
+\ 2016-08-14: Start integrating the code into fsb2.
+\
+\ 2017-02-27: Change the code style (no mandatory double spaces around
+\ comments or before semicolon anymore).  Don't assume the extension
+\ of the source filename is "fb"; update and improve the messages.
+\ Factor `run`.
+\
+\ 2017-03-02: Use a structure to hold the disk specifications.
+\ Add the disk specification to sector 0 of track 0.
+\
+\ 2017-03-05: Trailing empty blocks are filled with blanks, not with
+\ zeroes.
+\
+\ 2017-07-26: Add `s+`, which was included in Gforth 0.7.3 but removed
+\ from Gforth 0.7.9.
 
 \ vim: tw=64
