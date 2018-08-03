@@ -1,6 +1,6 @@
 = fsb2
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-02-27
+:revdate: 2018-08-03
 :linkattrs:
 
 // This file is part of fsb2
@@ -236,7 +236,9 @@ fsb2-trd :: ZX Spectrum TRD file (disk image for TR-DOS), with
 the Forth source saved on the sectors, except track 0, which is
 used by the DOS to recognize the disk.
 
-Support for the DSK disk images used by +3DOS is under development.
+fsb2-dsk :: ZX Spectrum +3/+3e DSK file (disk image for +3DOS),
+with the Forth source saved on the sectors, except two of them
+used by the DOS.
 
 == Installation
 
