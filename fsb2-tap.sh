@@ -8,7 +8,7 @@
 # ##############################################################
 # Author and license
 
-# Copyright (C) 2015 Marcos Cruz (programandala.net)
+# Copyright (C) 2015,2020 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
@@ -79,7 +79,7 @@ fsb2 $1
 # Get the filenames:
 
 basefilename=${1%.*}
-blocksfile=$basefilename.fsb.fb
+blocksfile=$basefilename.fb
 tapefile=$basefilename.tap
 spectrumfilename=${basefilename##*/}
 

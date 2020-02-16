@@ -8,7 +8,7 @@
 # ##############################################################
 # Author and license
 
-# Copyright (C) 2015 Marcos Cruz (programandala.net)
+# Copyright (C) 2015,2020 Marcos Cruz (programandala.net)
 
 # You may do whatever you want with this work, so long as you
 # retain the copyright notice(s) and this license in all
@@ -34,7 +34,7 @@
 # Requirements
 
 # fsb2:
-# 	<http://programandala.net/en.program.fsb2.html>
+#   <http://programandala.net/en.program.fsb2.html>
 # bin2code:
 #   <http://metalbrain.speccy.org/link-eng.htm>.
 
@@ -87,13 +87,13 @@ fsb2 $1
 # Get the filenames:
 
 basefilename=${1%.*}
-blocksfile=$basefilename.fsb.fb
+blocksfile=$basefilename.fb
 tapefile=$basefilename.tap
 
 # Create the target file:
 
 head --bytes=11263 $blocksfile > DISC
-  
+
 # The bin2code converter uses the host system filename in the
 # TAP file header (there's no option to change it) and Abersoft
 # Forth needs the file in the tape to be called "DISC".  That's
@@ -105,5 +105,5 @@ echo "\"$tapefile\" created"
 # Remove the intermediate files:
 
 rm -f DISC $blocksfile
-	
+
 # vim:tw=64:ts=2:sts=2:et:
