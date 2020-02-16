@@ -1,6 +1,6 @@
 = fsb2 to-do list
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-02-27
+:revdate: 2020-02-16
 
 // This file is part of fsb2
 // http://programandala.net/en.program.fsb2.html
@@ -25,3 +25,6 @@ error message.
 2017-02-27: Improve documentation of parameters.
 
 2017-02-27: Add a Vim file with the mappings used by fsb to check the source.
+
+2020-02-16: Replace <CONFIG.sh>, <INSTALL.sh> and <UNINSTALL.sh> with
+a <Makefile>.
