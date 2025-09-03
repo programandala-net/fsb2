@@ -1,3 +1,5 @@
+syntax: glob
+
 *_session.neo.vim
 *_session.neox.vim
 *_session.nvim

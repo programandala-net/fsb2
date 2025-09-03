@@ -1,6 +1,6 @@
 = fsb2
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-08-03
+:revdate: 2025-09-03
 :linkattrs:
 
 // This file is part of fsb2
@@ -15,6 +15,7 @@
 // This file is written in AsciiDoc/Asciidoctor format.
 // See <http://asciidoctor.org>.
 
+// Description {{{1
 == Description
 
 fsb2 is a preprocessor and converter of Forth source files.  Its
@@ -29,6 +30,7 @@ layout.
 fsb2's web page:
 http://programandala.net/en.program.fsb2.html.
 
+// Origin and motivation {{{1
 == Origin and motivation
 
 fsb2 was written as a faster and simpler alternative to a
@@ -51,6 +53,7 @@ But there are some differences:
 
 fsb and fsb2 can be installed at the same time.
 
+// Requirements {{{1
 == Requirements
 
 fsb2 is written in Forth for Gforth.
@@ -71,6 +74,7 @@ files from the FSB format to FB or FBS formats (see below). But
 the other converters, provided only as shell files, run only on
 GNU/Linux or other flavours of Unix.
 
+// Forth source filename extensions {{{1
 == Forth source filename extensions
 
 The filename extensions used by fsb2 are derived from ".fs" and
@@ -85,6 +89,7 @@ The filename extensions used by fsb2 are derived from ".fs" and
 | .fbs      | Forth blocks file with stream-like end-of-lines.
 |===
 
+// The FBS format {{{1
 == The FBS format
 
 FBS is the name fsb2 uses for a _target format_ it can convert
@@ -92,6 +97,7 @@ FSB sources to. FBS files are blocks files but with 63-chars
 lines and end of lines.  This is the format used by the library
 of the lina Forth system.
 
+// The FSB format {{{1
 == The FSB format
 
 fsb2 uses an ad-hoc simple format for Forth source, called FSB.
@@ -99,6 +105,7 @@ The ".fsb" filename extension is used.  FSB files are ordinary
 text files with only three simple layout conventions: block
 headers, metacomments and empty lines.
 
+// Block headers {{{2
 === Block headers
 
 Block headers must be marked with a comment. There are three
@@ -154,6 +161,7 @@ contents of the first block.  Example:
 \ This is block 1.
 ----
 
+// Metacomments {{{2
 === Metacomments
 
 Metacomments are comments that will be removed from the target
@@ -173,11 +181,13 @@ variable range \ this comment will be preserved as well
 
 ----
 
+// Empty lines {{{2
 === Empty lines
 
 All empty lines are ignored and will be removed during the
 conversion.
 
+// Command line options {{{1
 == Command line options
 
 ----
@@ -194,6 +204,7 @@ Usage: fsb2 [ OPTION | INPUT-FILE ] ...
   -d, --debug   activate debugging mode (output to the screen)
 ----
 
+// Example {{{1
 == Example
 
 The included file <test.fsb> can be used for testing:
@@ -206,6 +217,7 @@ fsb2 test.fsb
 fsb2 --fbs test.fsb
 ----
 
+// Additional converters {{{1
 == Additional converters
 
 Several additional converters are provided as shell files (with
@@ -240,6 +252,7 @@ fsb2-dsk :: ZX Spectrum +3/+3e DSK file (disk image for +3DOS),
 with the Forth source saved on the sectors, except two of them
 used by the DOS.
 
+// Installation {{{1
 == Installation
 
 . Edit <CONFIG.sh> and comment/uncomment your options, which are
@@ -248,4 +261,16 @@ used by the DOS.
 
 You can uninstall the program executing <UNINSTALL.sh>.
 
-// vim: tw=64:ts=2:sts=2:sw=2:et
+// Repository {{{1
+== Repository
+
+Since 2025-09 the
+https://hg.sr.ht/~programandala_net/fsb2[fsb2's repository] is
+powered by https://mercurial-scm.org[Mercurial] instead of Git
+and hosted on https://sr.ht/[SourceHut].
+
+For convenience, the
+https://github.com/programandala-net/fsb2[fsb2's old repository
+on GitHub], created in 2015-11, is kept as a mirror, handled by
+Mercurial's https://wiki.mercurial-scm.org/HgGit[hg-git]
+extension.
