@@ -5,12 +5,12 @@
 \ This file is part of fsb2
 \ http://programandala.net/en.program.fsb2.html
 
-\ Last modified: 201608111205
+\ Last modified: 20250902T2016+0200
 
 \ ==============================================================
 \ Author and license
 
-\ Copyright (C) 2016 Marcos Cruz (programandala.net)
+\ Copyright (C) 2016, 2025 Marcos Cruz (programandala.net)
 
 \ You may do whatever you want with this work, so long as you
 \ retain the copyright notice(s) and this license in all
@@ -37,6 +37,8 @@
 \ image.
 \
 \ 2016-08-11: Add command line arguments and integrate into fsb2.
+\
+\ 2025-09-02: Fix typo in comment.  Fix padding of the disk label.
 
 \ ==============================================================
 
@@ -53,7 +55,7 @@
   \ Return a string _ca len_ of _len_ zeros.
 
 : >spaces$  ( len -- ca len )  allocated 2dup blank  ;
-  \ Return a string _ca len_ of _len_ zeros.
+  \ Return a string _ca len_ of _len_ spaces.
 
 : str>file  ( ca len fid -- )  write-file throw  ;
   \ Write string _ca len_ to file _fid_.
@@ -79,7 +81,7 @@ create disk-label /disk-label chars allot
   \ Return the disk-label string.
 
 : >disk-label$  ( ca1 len1 -- ca2 len2 )
-  disk-label$  2dup blank  rot max chars move  disk-label$ ;
+  disk-label$  2dup blank rot min chars move  disk-label$ ;
   \ Return disk label _ca1 len1_, padded with spaces to its maximum
   \ length.
 
